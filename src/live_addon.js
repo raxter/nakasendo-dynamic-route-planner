@@ -333,7 +333,8 @@ function setLive(on){
   if (on && !window.LF){ liveToast("The live map library didn't load. Check your connection and reload."); return; }
   $("lmap").hidden = !LIVE; $("map").style.visibility = $("sky").style.visibility = LIVE ? "hidden" : "";
   document.querySelectorAll("#zin, #zout").forEach(b => b.hidden = LIVE);
-  $("zlive").textContent = LIVE ? "✏️" : "🗺️"; $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location";
+  $("zlive").innerHTML = LIVE ? "✏️<small>Sketch</small>" : "🗺️<small>Live</small>"; $("zlive").classList.toggle("on", LIVE);
+  $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location"; $("zlive").setAttribute("aria-label", $("zlive").title);
   $("zgps").hidden = !LIVE;
   if (LIVE){ liveInit(); setTimeout(() => { LMAP.invalidateSize(); drawLive(); }, 30); geoStart(); }
 }

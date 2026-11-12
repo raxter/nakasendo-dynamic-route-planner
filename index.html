@@ -135,6 +135,10 @@
   .hintpop{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:11.5px;padding:2px 8px;border-radius:999px;transform:translate(-50%,-150%);white-space:nowrap;transition:opacity .4s}
   #lmap{position:absolute;inset:0;z-index:1;isolation:isolate;background:#e9e4da}
   .zoom,.legend{z-index:5}
+  /* the live/sketch switch says what it does, so the way back from the live map is obvious */
+  .zoom #zlive{width:auto;min-width:36px;align-self:flex-end;padding:0 7px;display:flex;align-items:center;gap:3px;white-space:nowrap}
+  .zoom #zlive small{font-size:11px;font-weight:800}
+  .zoom #zlive.on{background:#fff4d6;border-color:#e5a83a}
   .legend.live{bottom:22px}
   .sq-icon{background:none;border:none;font-size:16px;line-height:18px;text-align:center}
   .live-tip{font:inherit;font-size:11.5px;font-weight:700;color:#3b2f2a;padding:2px 6px;border-radius:8px}
@@ -178,7 +182,7 @@
       <button type="button" id="zout" aria-label="Zoom out">－</button>
       <button type="button" id="zday" aria-label="Fit today's walk" title="Fit today">📍</button>
       <button type="button" id="ztrip" aria-label="Show whole trip" title="Whole trip">🗾</button>
-      <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️</button>
+      <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️<small>Live</small></button>
       <button type="button" id="zgps" aria-label="Show my location" title="Show my location" hidden>🎯</button>
       <button type="button" id="ztxt" aria-label="Map text: shown" title="Map text: shown → hidden → faded">👁️</button>
       <button type="button" id="zsize" aria-label="Map text size" title="Map text size" style="font-weight:800">Aa</button>
@@ -1486,7 +1490,8 @@ function setLive(on){
   if (on && !window.LF){ liveToast("The live map library didn't load. Check your connection and reload."); return; }
   $("lmap").hidden = !LIVE; $("map").style.visibility = $("sky").style.visibility = LIVE ? "hidden" : "";
   document.querySelectorAll("#zin, #zout").forEach(b => b.hidden = LIVE);
-  $("zlive").textContent = LIVE ? "✏️" : "🗺️"; $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location";
+  $("zlive").innerHTML = LIVE ? "✏️<small>Sketch</small>" : "🗺️<small>Live</small>"; $("zlive").classList.toggle("on", LIVE);
+  $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location"; $("zlive").setAttribute("aria-label", $("zlive").title);
   $("zgps").hidden = !LIVE;
   if (LIVE){ liveInit(); setTimeout(() => { LMAP.invalidateSize(); drawLive(); }, 30); geoStart(); }
 }

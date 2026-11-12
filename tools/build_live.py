@@ -18,10 +18,14 @@ rep('    <svg id="map" role="img"', '''    <div id="lmap" hidden></div>
     <svg id="map" role="img"''')
 rep('''      <button type="button" id="ztrip" aria-label="Show whole trip" title="Whole trip">🗾</button>''',
     '''      <button type="button" id="ztrip" aria-label="Show whole trip" title="Whole trip">🗾</button>
-      <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️</button>
+      <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️<small>Live</small></button>
       <button type="button" id="zgps" aria-label="Show my location" title="Show my location" hidden>🎯</button>''')
 rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate;background:#e9e4da}
   .zoom,.legend{z-index:5}
+  /* the live/sketch switch says what it does, so the way back from the live map is obvious */
+  .zoom #zlive{width:auto;min-width:36px;align-self:flex-end;padding:0 7px;display:flex;align-items:center;gap:3px;white-space:nowrap}
+  .zoom #zlive small{font-size:11px;font-weight:800}
+  .zoom #zlive.on{background:#fff4d6;border-color:#e5a83a}
   .legend.live{bottom:22px}
   .sq-icon{background:none;border:none;font-size:16px;line-height:18px;text-align:center}
   .live-tip{font:inherit;font-size:11.5px;font-weight:700;color:#3b2f2a;padding:2px 6px;border-radius:8px}
