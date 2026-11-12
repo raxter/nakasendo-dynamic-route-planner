@@ -93,7 +93,7 @@
   .legend{position:absolute;left:8px;bottom:8px;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
   .sw{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
   .stn{display:inline-block;width:10px;height:10px;border:2px solid var(--ai);border-radius:3px;background:#fff;vertical-align:middle;margin-right:4px}
-  .sw.walk{border-color:var(--ahead)} .sw.hop{border-top-style:dashed;border-color:var(--ahead)} .sw.pre{border-top-style:dotted;border-color:var(--ai)} .sw.back{border-top-style:dashed;border-color:var(--back)} .sw.done{border-color:#b7cfb3} .sw.same{border-top-width:1.5px;border-color:#6f6259}
+  .sw.walk{border-color:var(--ahead)} .sw.hop{border-top-style:dashed;border-color:var(--ahead)} .sw.pre{border-top-style:dotted;border-color:var(--ai)} .sw.back{border-top-style:dashed;border-color:var(--back)} .sw.done{border-color:#b7cfb3} .sw.same{border-top-width:1.5px;border-color:#6f6259} .sw.skipl{border-top-style:dashed;border-color:#7b5ea7}
 
   .panel{display:flex;flex-direction:column;gap:6px;min-height:0}
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -169,7 +169,7 @@
       <div class="fine">The daylight band shades the walk by the light when you'd be there: pale by day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark. Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
-      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="sw same"></i>same train runs on</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="sw same"></i>same train runs on</span><span id="lgSkip" hidden><i class="sw skipl"></i>bus instead of walking</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
     </div>
     <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
     <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
@@ -771,7 +771,7 @@ function render(){
   if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (back.p.hop.at) g += `<path d="${path([scr(back.p.ll), scr(back.p.hop.at)])}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (rideB && !shared) g += hopLine(back, -1, "#e08a12", "arrB"); }
-  const skip = skipOf(d, S.t);
+  const skip = skipOf(d, S.t); $("lgSkip").hidden = !skip;
   if (skip){   // Day 5: the bus that skips the walk, from the station by the inn straight to tonight's inn
     const s = skip.s, line = skipLL(d, s).map(scr), pts = [s.fromLL, ...(s.via || []), s.toLL].map(scr), dd = path(line), to = pts.at(-1);
     g += `<path d="${dd}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`

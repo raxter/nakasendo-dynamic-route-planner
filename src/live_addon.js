@@ -147,6 +147,7 @@ function liveInit(){
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
+  LMAP.on("zoomend", placeKids);   // the kids keep the same on-screen spacing at every zoom
   LMAP.attributionControl.addAttribution('trail <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>');
   return true;
 }
@@ -214,6 +215,24 @@ function iconSquirrels(){
   return LF.divIcon({className: "sq-icon", iconSize: [96, 66], iconAnchor: [74, 62],
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
+function iconPin(){ return LF.divIcon({className: "sq-icon", iconSize: [48, 66], iconAnchor: [24, 62], html: `<svg width="48" height="66" viewBox="0 0 48 66">${pin(24, 62)}</svg>`}); }
+function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
+/* the two grown-up kids trail behind mum along today's path, a fixed number of screen pixels back (like the sketch map) */
+let KIDS = null;
+function kidsLL(d, km){
+  const pts = sliceLL(d, 0, Math.max(km, 0.0001)).reverse().map(q => LMAP.latLngToContainerPoint(q));
+  const back = dist => { let left = dist;
+    for (let i = 0; i < pts.length - 1; i++){ const a = pts[i], b = pts[i+1], l = a.distanceTo(b);
+      if (l >= left){ const f = left / (l || 1); return LMAP.containerPointToLatLng([a.x + (b.x-a.x)*f, a.y + (b.y-a.y)*f]); } left -= l; }
+    return LMAP.containerPointToLatLng(pts.at(-1)); };
+  const o = pts[0]; let k1 = back(24), k2 = back(46);
+  const px = q => LMAP.latLngToContainerPoint(q);
+  if (px(k1).distanceTo(o) < 8) k1 = LMAP.containerPointToLatLng([o.x - 16, o.y + 2]);          // at the very start: huddle beside mum
+  if (px(k2).distanceTo(px(k1)) < 8) k2 = LMAP.containerPointToLatLng([px(k1).x - 16, px(k1).y + 1]);
+  return [k1, k2];
+}
+function placeKids(){ if (!KIDS || !LMAP || !LMAP._loaded) return;   // no view yet: the fit that follows fires zoomend
+  const [a, b] = kidsLL(D(), S.km); KIDS[0].setLatLng(a); KIDS[1].setLatLng(b); }
 function iconRide(mode){
   return LF.divIcon({className: "sq-icon", iconSize: [100, 60], iconAnchor: [50, 52], html: `<svg width="100" height="60" viewBox="0 0 100 60">${rideIcon(50, 56, mode)}</svg>`});
 }
@@ -299,11 +318,13 @@ function drawLive(){
   }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
-  let ll = llAt(d, km), icon = iconSquirrels(), drag = true;
+  let ll = llAt(d, km), icon = iconPin(), drag = true, walking = true;
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
     ll = alongPoly([js.a, ...(js.via || []), js.b], f);
-    if (js.kind === "ride"){ icon = iconRide(js.mode); drag = false; } }
-  else if (pre) ll = journeyOf(d)[0].a;
+    icon = js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(); drag = js.kind !== "ride"; walking = false; }
+  else if (pre){ ll = journeyOf(d)[0].a; icon = iconSquirrels(); walking = false; }
+  KIDS = walking ? [iconKid("scarf", .64), iconKid("pack", .62)].map(ic => LF.marker(llAt(d, km), {icon: ic, interactive: false, keyboard: false, zIndexOffset: 900}).addTo(LLAYER)) : null;
+  placeKids();
   const m = LF.marker(ll, {icon, draggable: drag, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);
   // dragging keeps the squirrels on the trail all the way (like the sketch map): snap on every move
   // stay on today's walk unless another day is clearly nearer (where days meet, e.g. Magome, today wins),
@@ -315,7 +336,7 @@ function drawLive(){
     const d = D(), cp = LMAP.latLngToContainerPoint(p), px = q => cp.distanceTo(LMAP.latLngToContainerPoint(q));
     setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return llAt(D(), S.km); };
   m.on("dragstart", () => LDRAG = true);
-  m.on("drag", e => m.setLatLng(snapDrag(e.target.getLatLng())));
+  m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng())); placeKids(); });
   m.on("dragend", e => { snapDrag(e.target.getLatLng()); LDRAG = false; render(); });
   // you: the blue dot
   if (GEO){
