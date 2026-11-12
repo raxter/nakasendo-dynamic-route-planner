@@ -32,7 +32,7 @@ rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate
   .live-tip.f{color:#2e8b3e;border-color:#2e8b3e}.live-tip.b{color:#c0700a;border-color:#e08a12}.live-tip.faded{opacity:.5 !important}
   .live-pop{font:inherit;font-size:13px;line-height:1.4}.live-pop .fine{font-size:11px;color:#7a6a5e}
   .live-set{appearance:none;margin:6px 0 4px;border:2px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
-  .livetoast{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;max-width:min(92%,520px);background:#2b231e;color:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .livetoast{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:6;max-width:min(92%,520px);background:#2b231e;color:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)}
   .leaflet-container{font:inherit}
   .skypane{opacity:.4}   /* no CSS blur here: suspected of blanking the map on some Android phones */
   .qlab-icon{background:none;border:none}
@@ -41,9 +41,11 @@ rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate
 </style>''')
 rep('$("zday").onclick = () => { fitDay(); render(); };', '$("zday").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(lineLL(D())).pad(.15)); return; } fitDay(); render(); };')
 rep('$("ztrip").onclick = () => { fitTrip(); render(); };', r'''$("ztrip").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(ORDER.flatMap(k => lineLL(dayObj(k)))).pad(.05)); return; } fitTrip(); render(); };
+$("zin").onclick = () => { if (LIVE) { LMAP.zoomIn(); return; } zoomAt([W/2,H/2], 1.5); };
+$("zout").onclick = () => { if (LIVE) { LMAP.zoomOut(); return; } zoomAt([W/2,H/2], 1/1.5); };
 $("zlive").onclick = () => { setLive(!LIVE); $("legend").classList.toggle("live", LIVE); };
 $("zgps").onclick = () => { geoStart(); if (GEO) { LMAP.setView(GEO.ll, Math.max(LMAP.getZoom(), 15)); } else liveToast("Finding you… allow location if your browser asks."); };''')
-rep("  renderText(fwd, back);\n}", "  renderText(fwd, back);\n  if (LIVE && !LDRAG) drawLive();\n}")
+rep("  renderText(fwd, back);\n  renderWx();\n}", "  renderText(fwd, back);\n  renderWx();\n  if (LIVE && !LDRAG) drawLive();\n}")
 rep("/* ---------- start ---------- */", addon + "\n/* ---------- start ---------- */")
 rep('''      <div class="mrow"><span>🌗 Daylight band</span>''', '''      <div class="mrow"><span>🗺️ Live map</span><div class="toggle" id="mBase" role="group" aria-label="Live map background"><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="pale">Pale</button><button type="button" data-v="topo">Topo</button><button type="button" data-v="photo">Aerial</button><button type="button" data-v="osm">OSM</button></div></div>
       <div class="mrow"><span>🌗 Daylight band</span>''')

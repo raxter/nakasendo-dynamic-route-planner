@@ -119,6 +119,13 @@ Precedence:
 - Sketch: `skyBand()` smooths the samples, draws Catmull-Rom/Bézier pieces into the separate `#sky` SVG under `#map`, and CSS blurs it. `#map` has no background rect any more; the paper colour comes from `.mapwrap`.
 - Live: polylines in a `sky` Leaflet pane (z 300) that CSS blurs (`.skypane`).
 
+### Weather strip
+
+- `#wx` sits at the top left of the map (both maps) and is toggled in ☰ (`S.wx`, remembered in `PREFS`). It shows hourly cells from 3 h before `S.t` to 6 h after, for the place the squirrels would be in each hour (`whereAt`: on the planned transport, at the inn, or on the walk). The highlighted cell is now; blue numbers are the chance of rain (≥ 20 %); each cell's tooltip has the details.
+- **Data:** Open-Meteo (`api.open-meteo.com`, free, no key, CORS-open, CC BY 4.0). The legend ("weather: Open-Meteo.com") and the info sheet credit it. Positions are bucketed into ~3 km cells (`wxKey`).
+- **Requests are rationed:** the first look at a day makes **one** request covering its whole route, rides and inns (`WX_DAYS`). After that, a cell is only re-fetched once it's over 3 h old (`WX_TTL`). In-flight cells are never requested twice (`WX_FLY`), failures wait a minute (`WX_FAIL`), and the cache lives in `localStorage` (`nakasendo.wx`). Open-Meteo rate-limits per IP (10,000 a day), and the cloud sandbox shares its IP, so test with a mocked API (route `api.open-meteo.com/**` in Playwright), not the real one. The sweeps run offline, and the strip then says "weather unavailable".
+- **Live map:** Leaflet's own zoom control was removed so the strip has the top left. The page's ＋ / － buttons zoom the live map too (wired in `build_live.py`). Live toasts sit below the strip (`top:64px`).
+
 ### Escape zones
 
 These colour the wide band under the route.

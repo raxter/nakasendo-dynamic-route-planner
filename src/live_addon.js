@@ -144,7 +144,7 @@ function liveInit(){
     osm: watchTiles("osm", LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}))
   };
   setBase(S.base);
-  LF.control.zoom({position: "topleft"}).addTo(LMAP);
+  // no Leaflet zoom control: the map's own ＋ / － buttons zoom the live map too, leaving the top left for the weather strip
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
   LMAP.on("zoomend", placeKids);   // the kids keep the same on-screen spacing at every zoom
@@ -353,7 +353,6 @@ function setLive(on){
   LIVE = on && !!window.LF;
   if (on && !window.LF){ liveToast("The live map library didn't load. Check your connection and reload."); return; }
   $("lmap").hidden = !LIVE; $("map").style.visibility = $("sky").style.visibility = LIVE ? "hidden" : "";
-  document.querySelectorAll("#zin, #zout").forEach(b => b.hidden = LIVE);
   $("zlive").innerHTML = LIVE ? "✏️<small>Sketch</small>" : "🗺️<small>Live</small>"; $("zlive").classList.toggle("on", LIVE);
   $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location"; $("zlive").setAttribute("aria-label", $("zlive").title);
   $("zgps").hidden = !LIVE;

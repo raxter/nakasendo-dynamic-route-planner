@@ -87,7 +87,7 @@
   .badge{font-size:11.5px;padding:1px 8px;border-radius:999px;background:rgba(253,238,242,.95);border:1.5px solid var(--sakura)}
   .badge.warn{background:rgba(255,243,220,.95);border-color:var(--gold)}
   .badge.bad{background:rgba(253,230,223,.95);border-color:var(--shu)}
-  .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:5px}
+  .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
   .zoom button{appearance:none;width:36px;height:36px;border-radius:12px;border:2px solid var(--line);background:rgba(255,253,248,.95);font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink)}
   .sw.zgo,.sw.zback,.sw.zcommit{border-top:0;height:8px;border-radius:4px}.sw.zgo{background:rgba(90,154,91,.45)}.sw.zback{background:rgba(233,195,44,.75)}.sw.zcommit{background:rgba(228,87,46,.7)}.sw.sky{border-top:0;height:8px;border-radius:4px;background:linear-gradient(90deg,#fff1c4,#ffd98f,#ff9f6e,#c48bc6,#2c3566)}.sw.znobus{border-top:0;height:8px;border-radius:4px;background:rgba(142,27,58,.7)}
   .legend{position:absolute;left:8px;bottom:8px;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
@@ -125,6 +125,19 @@
   .fine{font-size:12px;color:var(--quiet)}
   .menu{position:absolute;right:52px;top:8px;z-index:7;max-width:calc(100% - 64px);background:rgba(255,253,248,.98);border:2px solid var(--line);border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:7px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
   .menu[hidden]{display:none}
+  /* weather strip: top left of the map, hour by hour where the squirrels would be */
+  .wx{position:absolute;left:8px;top:8px;z-index:5;display:flex;gap:1px;max-width:calc(100% - 62px);overflow-x:auto;scrollbar-width:none;background:rgba(255,253,248,.93);border:2px solid var(--line);border-radius:12px;padding:2px 3px}
+  .wx::-webkit-scrollbar{display:none}
+  .wx[hidden]{display:none}
+  .wx .c{flex:0 0 auto;width:29px;text-align:center;line-height:1.12;border-radius:8px;padding:1px 0}
+  .wx .c.now{background:#fff1c9;box-shadow:inset 0 0 0 1.5px var(--gold)}
+  .wx .c.past{opacity:.55}
+  .wx .h{font-size:9.5px;font-weight:800;color:var(--quiet)}
+  .wx .i{font-size:14px;line-height:1.2}
+  .wx .t{font-size:10.5px;font-weight:800}
+  .wx .p{font-size:9px;font-weight:800;color:#2f6db5;min-height:10px}
+  @media (max-width:599px){ .wx .c{width:26px} .wx .i{font-size:13px} }
+  .wx .msg{font-size:11px;font-weight:700;padding:3px 6px;white-space:nowrap;color:var(--quiet)}
   .mrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;font-weight:800;white-space:nowrap}
   .menu .toggle button{padding:2px 9px}
   .menu .fine{font-size:10.5px;line-height:1.3;max-width:300px}
@@ -163,13 +176,15 @@
       <button type="button" id="zsize" aria-label="Map text size" title="Map text size" style="font-weight:800">Aa</button>
       <button type="button" id="zmenu" aria-label="Map look" title="Map look" aria-expanded="false" aria-controls="menu">☰</button>
     </div>
+    <div class="wx" id="wx" role="group" aria-label="Weather, hour by hour, where you'd be" hidden></div>
     <div class="menu" id="menu" role="dialog" aria-label="Map look" hidden>
       <div class="mrow"><span>🥾 Paths</span><div class="toggle" id="mPaths" role="group" aria-label="How to draw the walks"><button type="button" data-v="walk">Walking path</button><button type="button" data-v="straight">Straight lines</button></div></div>
       <div class="mrow"><span>🌗 Daylight band</span><div class="toggle" id="mSky" role="group" aria-label="Daylight band along the walk"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+      <div class="mrow"><span>🌦️ Weather</span><div class="toggle" id="mWx" role="group" aria-label="Weather strip"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
       <div class="fine">The daylight band shades the walk by the light when you'd be there: pale by day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark. Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
-      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="sw same"></i>same train runs on</span><span id="lgSkip" hidden><i class="sw skipl"></i>bus instead of walking</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="sw same"></i>same train runs on</span><span id="lgSkip" hidden><i class="sw skipl"></i>bus instead of walking</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span><span id="lgWx">weather: Open-Meteo.com</span>
     </div>
     <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
     <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
@@ -179,6 +194,7 @@
       <p><b>Start time:</b> drag the ▲ under the time bar to change when you leave the inn. On Day 5 the tour taxi leaves then (≈25 min to the falls). On Day 6 the tour vehicle leaves then (≈45 min to Kiso-Fukushima Station), and you catch the next train to Yabuhara. Walk Japan doesn't publish these times: it only says the transfer is after breakfast, so the durations are my estimates. The 🏁 on the bar is your expected finish, 🌇 is sunset and 🌙 is dark.</p>
       <p><b>Walking model:</b> your pace is in flat-ground minutes per km, including short rests. Climbs add 15 min per 100 m going up, and walking back over a descent counts as a climb. Long days include a 45-min lunch.</p>
       <p><b>Light:</b> 🌇 is sunset (about 16:34–16:42, depending on the day and place) and 🌙 is when it gets dark, at the end of civil twilight about 27 minutes later. In deep valleys and forest it gets dim earlier than that.</p>
+      <p><b>Weather:</b> the strip at the top left shows the forecast hour by hour, from 3 hours before the time you've set to 6 hours after, for where the squirrels would be in each hour (on the walk, on the train, or at the inn). The highlighted hour is now. Blue numbers are the chance of rain. It needs a connection and keeps the last forecast for a few hours. Forecast data by <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Turn it off in <b>☰</b>.</p>
       <p><b>Paths:</b> the walks follow the Nakasendo as mapped on OpenStreetMap (© OpenStreetMap contributors, ODbL). Where the walk leaves the old road (the Kaida Plateau on Day 5, and the short walks to stations) the path comes from OpenStreetMap walking routes, so it's a best guess. One Day 5 stretch is still a straight line. Use <b>☰</b> to switch to straight lines between stops. Points marked ≈ are approximate. On the ground, follow your Walk Japan booklet and the signposts.</p>
       <p><b>Timetables:</b> japan-guide.com (Kiso buses, 2026), Go Nagano, the Kiso bus Kaida line timetable (Oct 2026), NAVITIME (Usui line bus), Ekispert (Nagiso trains), JR East (Yokokawa) and the Karuizawa Aka Bus 2026 timetable (up and down). Times marked ≈ are my estimates from neighbouring stops, so check them at the station or ask your inn. Distances come from the Walk Japan itinerary.</p>
       <p><b>Safety:</b> taxis are a last resort, so ask your inn to call one. Bear bells on in the forest, and never split up mid-pass. Emergency: 119 (ambulance) / 110 (police).</p>
@@ -350,8 +366,8 @@ const INNS = [
 ];
 
 /* ---------- state ---------- */
-const S = {walkOver:{}, txt:2, txtScale:0.5, paths:"walk", sky:true, base:"quiet", day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
-const PREFS = ["paths", "txtScale", "sky", "base"];   // look settings from the ☰ menu, remembered on this device
+const S = {walkOver:{}, txt:2, txtScale:0.5, paths:"walk", sky:true, wx:true, base:"quiet", day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
+const PREFS = ["paths", "txtScale", "sky", "wx", "base"];   // look settings from the ☰ menu, remembered on this device
 try { const sv = JSON.parse(localStorage.getItem("nakasendo.look") || "{}"); PREFS.forEach(k => { if (sv[k] != null) S[k] = sv[k]; }); } catch (e) {}
 const savePrefs = () => { try { localStorage.setItem("nakasendo.look", JSON.stringify(Object.fromEntries(PREFS.map(k => [k, S[k]])))); } catch (e) {} };
 const startOf = d => S.starts[d.key] ?? d.walkStart;            // ▲ = when you leave the inn
@@ -844,6 +860,67 @@ function render(){
   $("sky").innerHTML = S.sky ? skyBand(d, pxPerKm) : "";
   WALKER = [wx, wy];
   renderText(fwd, back);
+  renderWx();
+}
+
+/* ---------- weather: hourly forecast where the squirrels would be (Open-Meteo, free, no key) ---------- */
+const WX_URL = "https://api.open-meteo.com/v1/forecast", WX_TTL = 3 * 3600e3;
+const WXC = (() => { try { return JSON.parse(localStorage.getItem("nakasendo.wx") || "{}"); } catch (e) { return {}; } })();
+const WX_WAIT = new Set(), WX_FLY = new Set(), WX_FAIL = {};   // queued, in flight, recently failed (no retry for a minute)
+let WX_ERR = "", WX_TIMER = null; const WX_DAYS = {};
+const dayISO = d => `2026-11-${d.date.match(/(\d+) Nov/)[1].padStart(2, "0")}`;
+const wxKey = (iso, ll) => `${iso}|${(Math.round(ll[0]/0.03)*0.03).toFixed(2)},${(Math.round(ll[1]/0.03)*0.03).toFixed(2)}`;   // ~3 km cells
+function whereAt(d, t){   // where the squirrels are at time t: on the planned transport, at the inn, or on the walk
+  const js = segAt(d, t);
+  if (js){ const f = js.kind === "wait" || js.done ? 0 : Math.min(1, Math.max(0, (t - js.t0) / Math.max(js.t1 - js.t0, 1))); return alongPoly([js.a, ...(js.via || []), js.b], f); }
+  if (d.transfer && t < startOf(d)) return journeyOf(d)[0].a;
+  return llAt(d, Pos(d, t, S.pace).km);
+}
+const wxIcon = (c, day) => c === 0 ? (day ? "☀️" : "🌙") : c === 1 ? (day ? "🌤️" : "🌙") : c === 2 ? "⛅" : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️"
+  : c >= 51 && c <= 57 ? "🌦️" : (c >= 61 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "🌨️" : c >= 95 ? "⛈️" : "·";
+const wxWord = c => c === 0 ? "clear" : c <= 2 ? "partly cloudy" : c === 3 ? "cloudy" : c <= 48 ? "fog" : c <= 57 ? "drizzle" : c <= 67 ? "rain" : c <= 77 ? "snow" : c <= 82 ? "showers" : c <= 86 ? "snow showers" : "thunder";
+function wxFetch(keys){
+  keys = keys.filter(k => !WX_FLY.has(k) && !WX_WAIT.has(k) && !(Date.now() - (WX_FAIL[k] || 0) < 60e3));
+  if (!keys.length) return;
+  keys.forEach(k => WX_WAIT.add(k));
+  clearTimeout(WX_TIMER);
+  WX_TIMER = setTimeout(() => {   // one request per day for all the cells we still need (Open-Meteo takes many coordinates at once)
+    const byDay = {}; [...WX_WAIT].forEach(k => { WX_FLY.add(k); (byDay[k.split("|")[0]] = byDay[k.split("|")[0]] || []).push(k); }); WX_WAIT.clear();
+    Object.entries(byDay).forEach(([iso, ks]) => {
+      const ll = ks.map(k => k.split("|")[1].split(","));
+      const url = `${WX_URL}?latitude=${ll.map(q => q[0]).join(",")}&longitude=${ll.map(q => q[1]).join(",")}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,is_day&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`;
+      const landed = () => ks.forEach(k => WX_FLY.delete(k));
+      fetch(url).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(js => {
+        (Array.isArray(js) ? js : [js]).forEach((w, i) => { const h = w.hourly;
+          WXC[ks[i]] = {at: Date.now(), c: h.weather_code, t: h.temperature_2m, p: h.precipitation_probability, mm: h.precipitation, day: h.is_day}; });
+        WX_ERR = ""; landed();
+        try { const keep = Object.entries(WXC).sort((a, b) => b[1].at - a[1].at).slice(0, 150); localStorage.setItem("nakasendo.wx", JSON.stringify(Object.fromEntries(keep))); } catch (e) {}
+        renderWx();
+      }).catch(e => { landed(); ks.forEach(k => WX_FAIL[k] = Date.now()); WX_ERR = navigator.onLine === false ? "offline" : String(e.message || e); renderWx(); });
+    });
+  }, 350);
+}
+function renderWx(){
+  const el = $("wx"); if (!S.wx){ el.hidden = true; return; } el.hidden = false;
+  const d = D(), iso = dayISO(d), h0 = Math.floor(S.t / 60), cells = [];
+  for (let h = h0 - 3; h <= h0 + 6; h++) if (h >= 0 && h <= 23) cells.push({h, key: wxKey(iso, whereAt(d, h === h0 ? S.t : h*60 + 30))});
+  const fresh = k => WXC[k] && (Date.now() - WXC[k].at < WX_TTL || navigator.onLine === false);
+  if (!WX_DAYS[d.id] || Date.now() - WX_DAYS[d.id] > WX_TTL){   // first look at a day: one request covering its whole route, rides and inns
+    WX_DAYS[d.id] = Date.now(); const ks = new Set();
+    for (let km = 0; km <= total(d) + 1e-6; km += 0.5) ks.add(wxKey(iso, llAt(d, km)));
+    journeyOf(d).forEach(g => [g.a, ...(g.via || []), g.b].forEach(q => ks.add(wxKey(iso, q))));
+    for (let h = 0; h < 24; h++) ks.add(wxKey(iso, whereAt(d, h*60 + 30)));
+    wxFetch([...ks].filter(k => !fresh(k)));
+  }
+  const stale = cells.filter(c => !WXC[c.key] || (Date.now() - WXC[c.key].at > WX_TTL && navigator.onLine !== false)).map(c => c.key);
+  if (stale.length) wxFetch(stale);
+  if (cells.every(c => !WXC[c.key])){ el.innerHTML = `<div class="msg">🌦️ ${WX_ERR ? `weather unavailable (${esc(WX_ERR)})` : "getting the weather…"}</div>`; return; }
+  el.innerHTML = cells.map(c => { const w = WXC[c.key], cls = `c${c.h === h0 ? " now" : c.h < h0 ? " past" : ""}`;
+    if (!w) return `<div class="${cls}"><div class="h">${c.h}</div><div class="i">·</div><div class="t">…</div><div class="p"></div></div>`;
+    const i = c.h, t = Math.round(w.t[i]), pp = w.p[i], mm = w.mm[i];
+    const tip = `${c.h}:00 · ${wxWord(w.c[i])} · ${t}°C · ${pp ?? "?"}% chance of rain${mm ? `, ${mm} mm` : ""}`;
+    return `<div class="${cls}" title="${tip}"><div class="h">${c.h}</div><div class="i">${wxIcon(w.c[i], w.day[i])}</div><div class="t">${t}°</div><div class="p">${pp >= 20 ? pp + "%" : ""}</div></div>`; }).join("");
+  const now = el.querySelector(".now"); if (now) el.scrollLeft = Math.max(0, now.offsetLeft - 3 * 30 - 4);
 }
 
 /* ---------- text panels ---------- */
@@ -1079,9 +1156,12 @@ $("zsize").onclick = () => { S.txtScale = S.txtScale < .6 ? .75 : S.txtScale < .
 function menuSync(){
   document.querySelectorAll("#mPaths button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.paths ? "true" : "false"));
   document.querySelectorAll("#mSky button").forEach(b => b.setAttribute("aria-pressed", (b.dataset.v === "1") === S.sky ? "true" : "false"));
+  document.querySelectorAll("#mWx button").forEach(b => b.setAttribute("aria-pressed", (b.dataset.v === "1") === S.wx ? "true" : "false"));
+  $("lgWx").hidden = !S.wx;
   $("lgSky").hidden = !S.sky; $("lgOsm").hidden = S.paths !== "walk"; $("zmenu").setAttribute("aria-expanded", $("menu").hidden ? "false" : "true"); }
 const menuShow = on => { $("menu").hidden = !on; menuSync(); };
 $("zmenu").onclick = () => menuShow($("menu").hidden);
+document.querySelectorAll("#mWx button").forEach(b => b.onclick = () => { S.wx = b.dataset.v === "1"; savePrefs(); menuSync(); renderWx(); });
 document.querySelectorAll("#mPaths button").forEach(b => b.onclick = () => { S.paths = b.dataset.v; savePrefs(); menuSync(); render(); });
 document.querySelectorAll("#mSky button").forEach(b => b.onclick = () => { S.sky = b.dataset.v === "1"; savePrefs(); menuSync(); render(); });
 document.addEventListener("pointerdown", e => { if (!$("menu").hidden && !$("menu").contains(e.target) && !$("zmenu").contains(e.target)) menuShow(false); });
