@@ -289,13 +289,13 @@ function drawLive(){
   }
   const skip = skipOf(D(), S.t);
   if (skip){   // Day 5: the bus that skips the walk
-    const s = skip.s, line = smoothThrough([s.fromLL, ...s.via, s.toLL]);
+    const s = skip.s, line = skipLL(d, s);
     LF.polyline(line, {color: "#fffdf8", weight: 7, opacity: .9, interactive: false}).addTo(LLAYER);
     LF.polyline(line, {color: "#7b5ea7", weight: 4, dashArray: "9 6", interactive: false}).addTo(LLAYER);
-    s.via.forEach(v => LF.circleMarker(v, {radius: 4, color: "#7b5ea7", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false}).addTo(LLAYER));
+    (s.via || []).forEach(v => LF.circleMarker(v, {radius: 4, color: "#7b5ea7", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false}).addTo(LLAYER));
     LF.circleMarker(s.fromLL, {radius: 6, color: "#7b5ea7", weight: 3, fillColor: "#fff", fillOpacity: 1}).addTo(LLAYER).bindTooltip(`🚏 ${esc(s.from)}`);
     const end = LF.circleMarker(s.toLL, {radius: 7, color: "#fff", weight: 2, fillColor: "#7b5ea7", fillOpacity: 1}).addTo(LLAYER);
-    if (skip.dep != null) end.bindTooltip(`🚌 skip the walk: ${fmt(skip.dep)} → ${esc(s.to)} ${fmt(skip.at)}`, {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (S.txt === 2 ? " faded" : "")});
+    if (skip.dep != null) end.bindTooltip(`🚌 ${s.tag}: ${fmt(skip.dep)} → ${esc(s.to)} ${s.arrEst ? "≈" : ""}${fmt(skip.at)}`, {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (S.txt === 2 ? " faded" : "")});
   }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
