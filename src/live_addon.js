@@ -4,15 +4,125 @@
 let LIVE = false, LMAP = null, LLAYER = null, GEO = null, GEOWATCH = null, LIVE_FITTED = false, LDRAG = false;
 const LIVE_PACE_MIN = 12, LIVE_PACE_MAX = 60;
 
+/* ---------- "Quiet" background: GSI vector tiles drawn by hand ----------
+   Only contours, lakes and rivers, plus the names of villages near the trail (with romaji). */
+function mvtDecode(buf){   // minimal Mapbox Vector Tile reader → {layerName: {extent, keys, values, feats:[{type, tags, geom}]}}
+  const b = new Uint8Array(buf), dv = new DataView(buf), td = new TextDecoder(); let p = 0;
+  const vint = () => { let r = 0, s = 0, x; do { x = b[p++]; r += (x & 0x7f) * 2**s; s += 7; } while (x & 0x80); return r; };
+  const skip = w => { if (w === 0) vint(); else if (w === 1) p += 8; else if (w === 2) { const n = vint(); p += n; } else if (w === 5) p += 4; };
+  const str = () => { const n = vint(), v = td.decode(b.subarray(p, p + n)); p += n; return v; };
+  const packed = () => { const end = vint() + p, a = []; while (p < end) a.push(vint()); return a; };
+  const layers = {};
+  while (p < b.length){ const t0 = vint();
+    if (t0 !== 26){ skip(t0 & 7); continue; }                     // field 3 (layers), length-delimited
+    const end = vint() + p, L = {name:"", keys:[], values:[], feats:[], extent:4096};
+    while (p < end){ const t1 = vint(), f = t1 >> 3;
+      if (f === 1) L.name = str();
+      else if (f === 2){ const fe = vint() + p, F = {type:0, tags:[], geom:[]};
+        while (p < fe){ const t2 = vint(), g = t2 >> 3; if (g === 2) F.tags = packed(); else if (g === 3) F.type = vint(); else if (g === 4) F.geom = packed(); else skip(t2 & 7); }
+        L.feats.push(F); }
+      else if (f === 3) L.keys.push(str());
+      else if (f === 4){ const ve = vint() + p; let v = null;
+        while (p < ve){ const t3 = vint(), k = t3 >> 3;
+          if (k === 1) v = str(); else if (k === 2){ v = dv.getFloat32(p, true); p += 4; } else if (k === 3){ v = dv.getFloat64(p, true); p += 8; }
+          else if (k === 4 || k === 5) v = vint(); else if (k === 6){ const n = vint(); v = n % 2 ? -(n + 1) / 2 : n / 2; } else if (k === 7) v = !!vint(); else skip(t3 & 7); }
+        L.values.push(v); }
+      else if (f === 5) L.extent = vint(); else skip(t1 & 7); }
+    layers[L.name] = L; }
+  return layers;
+}
+const mvtProps = (L, F) => { const o = {}; for (let i = 0; i < F.tags.length; i += 2) o[L.keys[F.tags[i]]] = L.values[F.tags[i+1]]; return o; };
+function mvtLines(F){ const out = []; let x = 0, y = 0, i = 0, cur = null; const g = F.geom;
+  while (i < g.length){ const c = g[i++], id = c & 7, n = c >> 3;
+    if (id === 7) continue;
+    for (let k = 0; k < n; k++){ const dx = g[i++], dy = g[i++]; x += (dx >> 1) ^ -(dx & 1); y += (dy >> 1) ^ -(dy & 1);
+      if (id === 1){ cur = [[x, y]]; out.push(cur); } else cur.push([x, y]); } }
+  return out; }
+
+/* kana → romaji (Hepburn, simplified) so the village names are readable */
+const KANA = Object.fromEntries("あa いi うu えe おo かka きki くku けke こko さsa しshi すsu せse そso たta ちchi つtsu てte とto なna にni ぬnu ねne のno はha ひhi ふfu へhe ほho まma みmi むmu めme もmo やya ゆyu よyo らra りri るru れre ろro わwa をo んn がga ぎgi ぐgu げge ごgo ざza じji ずzu ぜze ぞzo だda ぢji づzu でde どdo ばba びbi ぶbu べbe ぼbo ぱpa ぴpi ぷpu ぺpe ぽpo ぁa ぃi ぅu ぇe ぉo".split(" ").map(s => [s[0], s.slice(1)]));
+function romaji(k){
+  k = String(k || "").replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); let out = "";
+  for (let i = 0; i < k.length; i++){ const c = k[i], n = k[i+1];
+    if (c === "っ"){ const r = KANA[n] || ""; out += r.startsWith("ch") ? "t" : r[0] || ""; continue; }
+    if (KANA[c] && n && "ゃゅょ".includes(n)){ const r = KANA[c], v = {"ゃ":"a","ゅ":"u","ょ":"o"}[n]; out += (/^(shi|chi|ji)$/.test(r) ? r.slice(0, -1) : r.slice(0, -1) + "y") + v; i++; continue; }
+    out += KANA[c] ?? ""; }
+  out = out.replace(/ou/g, "o").replace(/uu/g, "u").replace(/oo/g, "o");
+  return out ? out[0].toUpperCase() + out.slice(1) : ""; }
+
+let TRAIL_SEGS = null;   // every day's walking path, for "is this village near the trail?"
+function nearTrail(ll, m){
+  if (!TRAIL_SEGS){ TRAIL_SEGS = []; Object.values(DAYS).forEach(d => d.pts.forEach((p, i) => { const line = TRAIL[d.id]?.[i] || []; for (let j = 1; j < line.length; j++) TRAIL_SEGS.push([line[j-1], line[j]]); })); }
+  const kx = 111320 * Math.cos(ll[0] * Math.PI/180), ky = 110540;
+  return TRAIL_SEGS.some(([a, b]) => { const ax = (a[1]-ll[1])*kx, ay = (a[0]-ll[0])*ky, bx = (b[1]-ll[1])*kx, by = (b[0]-ll[0])*ky;
+    if (Math.min(ax, bx) > m || Math.max(ax, bx) < -m || Math.min(ay, by) > m || Math.max(ay, by) < -m) return false;
+    const vx = bx-ax, vy = by-ay, f = Math.min(Math.max(-(ax*vx + ay*vy)/(vx*vx + vy*vy || 1), 0), 1);
+    return Math.hypot(ax + f*vx, ay + f*vy) <= m; });
+}
+const QUIET_URL = (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${z}/${x}/${y}.pbf`;
+const GSI_ATTR = '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>';
+function makeQuietLayer(){
+  const labels = LF.layerGroup(), byTile = new Map(), live = new Map();
+  const Q = LF.GridLayer.extend({
+    createTile(c, done){
+      const cv = document.createElement("canvas"), r = Math.min(window.devicePixelRatio || 1, 2), sz = this.getTileSize();
+      cv.width = sz.x * r; cv.height = sz.y * r;
+      const ctx = cv.getContext("2d"); ctx.fillStyle = "#fbf6ec"; ctx.fillRect(0, 0, cv.width, cv.height);
+      fetch(QUIET_URL(c.z, c.x, c.y)).then(res => res.ok ? res.arrayBuffer() : null).then(buf => {
+        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); done(null, cv);
+      }).catch(() => done(null, cv));
+      return cv; },
+    onAdd(map){ LF.GridLayer.prototype.onAdd.call(this, map); labels.addTo(map); },
+    onRemove(map){ LF.GridLayer.prototype.onRemove.call(this, map); map.removeLayer(labels); }
+  });
+  const q = new Q({maxNativeZoom: 16, minNativeZoom: 4, maxZoom: 18, attribution: GSI_ATTR});
+  q.on("tileunload", e => { const k = `${e.coords.z}/${e.coords.x}/${e.coords.y}`;
+    (byTile.get(k) || []).forEach(id => { const L = live.get(id); if (L && --L.n <= 0){ labels.removeLayer(L.m); live.delete(id); } }); byTile.delete(k); });
+  return q;
+}
+function quietDraw(ctx, Ls, px, r, c, layer, labels, byTile, live){
+  ctx.lineJoin = ctx.lineCap = "round";
+  const each = (name, fn) => { const L = Ls[name]; if (!L) return; const s = px / L.extent; L.feats.forEach(F => fn(mvtLines(F), mvtProps(L, F), s, L.extent)); };
+  const trace = (lines, s, close) => { ctx.beginPath(); lines.forEach(l => { l.forEach(([x, y], i) => i ? ctx.lineTo(x*s, y*s) : ctx.moveTo(x*s, y*s)); if (close) ctx.closePath(); }); };
+  each("contour", (ls, p, s) => { const idx = c.z >= 13 ? p.alti % 50 === 0 : p.alti % 500 === 0;
+    trace(ls, s); ctx.strokeStyle = idx ? "rgba(150,108,70,.55)" : "rgba(170,130,92,.32)"; ctx.lineWidth = (idx ? 1.1 : .6) * r; ctx.stroke(); });
+  each("waterarea", (ls, p, s) => { trace(ls, s, true); ctx.fillStyle = "#cfe4f1"; ctx.fill("evenodd"); ctx.strokeStyle = "#a9cde6"; ctx.lineWidth = .8 * r; ctx.stroke(); });
+  each("river", (ls, p, s) => { trace(ls, s); ctx.strokeStyle = "#9fc8e3"; ctx.lineWidth = 1.4 * r; ctx.stroke(); });
+  const key = `${c.z}/${c.x}/${c.y}`, ids = [], n = 2 ** c.z;
+  each("label", (ls, p, s, ext) => {
+    if (p.annoCtg !== 210 && p.annoCtg !== 220 || !ls[0]?.[0]) return;   // 210/220 = village and hamlet names
+    const [x, y] = ls[0][0], lon = (c.x + x/ext) / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (c.y + y/ext) / n))) * 180 / Math.PI;
+    if (!nearTrail([lat, lon], 1200)) return;
+    const id = `${p.knj}@${lat.toFixed(3)},${lon.toFixed(3)}`; ids.push(id);
+    if (live.has(id)) { live.get(id).n++; return; }
+    const ro = romaji(p.kana), html = `<span class="qlab">${esc(ro || p.knj)}${ro ? ` <small>${esc(p.knj)}</small>` : ""}</span>`;
+    const m = LF.marker([lat, lon], {icon: LF.divIcon({className: "qlab-icon", html, iconSize: [0, 0]}), pane: "qlabels", interactive: false, keyboard: false});
+    live.set(id, {m, n: 1}); labels.addLayer(m);
+  });
+  byTile.set(key, ids);
+}
+
+let BASES = null, BASE_ON = null, SKYR = null;
+function setBase(k){
+  if (!LMAP) return;
+  const b = BASES[k] || BASES.quiet; if (b === BASE_ON) return;
+  if (BASE_ON) LMAP.removeLayer(BASE_ON);
+  BASE_ON = b.addTo(LMAP); BASE_ON.bringToBack();
+}
 function liveInit(){
   if (LMAP || !window.LF) return !!LMAP;
   LMAP = LF.map("lmap", {zoomControl: false, attributionControl: true});
-  const gsi = LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>'});
-  const gsiPale = LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>'});
-  const photo = LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>'});
-  const osm = LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
-  gsi.addTo(LMAP);
-  LF.control.layers({"Japan topo (GSI)": gsi, "Japan pale (GSI)": gsiPale, "Aerial photo (GSI)": photo, "OpenStreetMap": osm}, null, {position: "bottomright"}).addTo(LMAP);
+  LMAP.createPane("qlabels").style.zIndex = 390;                       // village names: under the route lines
+  const sky = LMAP.createPane("sky"); sky.style.zIndex = 300; sky.style.pointerEvents = "none"; sky.classList.add("skypane");
+  SKYR = LF.svg({pane: "sky", padding: .5});
+  BASES = {
+    quiet: makeQuietLayer(),
+    pale: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
+    topo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
+    photo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: GSI_ATTR}),
+    osm: LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'})
+  };
+  setBase(S.base);
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
@@ -99,6 +209,9 @@ function drawLive(){
   // planned tour transport
   TOUR.forEach(t => { if ((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course) return;
     LF.polyline([t.a, t.b], {color: "#3d5a99", weight: t.day === selKey ? 4 : 2.5, opacity: t.day === selKey ? .9 : .4, dashArray: "1 8", lineCap: "round"}).addTo(LLAYER); });
+  // the daylight band (blurred by CSS on its pane), under everything else
+  if (S.sky){ const q = skySamples(d, 120);
+    for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 34, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
   // today's walk, coloured by escape options
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     LF.polyline(sliceLL(d, z.a, z.b), {color: ZONE_COL[z.z], weight: 9, opacity: z.z === "go" ? .55 : .75, lineCap: "butt"}).addTo(LLAYER); });
@@ -147,7 +260,7 @@ function drawLive(){
 function setLive(on){
   LIVE = on && !!window.LF;
   if (on && !window.LF){ liveToast("The live map library didn't load. Check your connection and reload."); return; }
-  $("lmap").hidden = !LIVE; $("map").style.visibility = LIVE ? "hidden" : "";
+  $("lmap").hidden = !LIVE; $("map").style.visibility = $("sky").style.visibility = LIVE ? "hidden" : "";
   document.querySelectorAll("#zin, #zout").forEach(b => b.hidden = LIVE);
   $("zlive").textContent = LIVE ? "✏️" : "🗺️"; $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location";
   $("zgps").hidden = !LIVE;

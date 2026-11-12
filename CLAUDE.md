@@ -74,7 +74,7 @@ It's one inline `<script>`, with sections marked `/* ---------- name ---------- 
 
 ### State
 
-`S = {day, course, pace, km, t, starts:{}, walkOver:{}, txt, txtScale, paths}`. `paths` (`"walk"` | `"straight"`) and `txtScale` are remembered in `localStorage` (`nakasendo.look`).
+`S = {day, course, pace, km, t, starts:{}, walkOver:{}, txt, txtScale, paths, sky, base}`. The look settings `paths` (`"walk"` | `"straight"`), `txtScale`, `sky` (daylight band on/off) and `base` (live-map background) are remembered in `localStorage` (`nakasendo.look`); see `PREFS`.
 
 - **`startOf(d)`:** when you leave the inn, i.e. the ▲ on the time rail.
 - **`transferOf(d)`:** the morning tour transfer.
@@ -105,6 +105,12 @@ Precedence:
 - Everything that draws or snaps uses it: `llAt`, `sliceLL` / `routeSlice`, `lineLL`, `nearestOn` (dragging), `snapToDay` (live), the day fits and the trailing squirrels.
 - **Where the paths come from** (`tools/build_paths.py`): the shortest way along the OSM 中山道 route relations (美濃, 木曽路, 信濃, the whole route, and 旧中山道 east of Usui). Stations that sit off the old road get a short foot-routed connector. Anything else (Day 5 on the Kaida Plateau) uses OSM foot routing via routing.openstreetmap.de, falling back to the bike profile after a big detour, and to a straight line if nothing believable is found (Kaida Info Centre → Kaida Shisho). The script prints each stretch's length against the itinerary km; check those numbers, and look at the result on a map, after any rebuild.
 - **Attribution is required** (ODbL): the legend's "trail © OpenStreetMap", the ☰ menu note, the info sheet and the Leaflet attribution all carry it.
+
+### Daylight band
+
+- `skyAt(d, t)` maps a time to the colour of the light (`SKY_STOPS`: night navy, dawn pink ≈6:15, pale day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark). `skySamples(d)` samples the day's walk with `T(d, km, pace)`, so the band moves with pace and start time.
+- Sketch: `skyBand()` smooths the samples, draws Catmull-Rom/Bézier pieces into the separate `#sky` SVG under `#map`, and CSS blurs it. `#map` has no background rect any more; the paper colour comes from `.mapwrap`.
+- Live: polylines in a `sky` Leaflet pane (z 300) that CSS blurs (`.skypane`).
 
 ### Escape zones
 
@@ -137,11 +143,12 @@ These colour the wide band under the route.
   - Day 4 has a course toggle.
   - The **"📍 I'm here…"** dropdown (`hereAt`): Now, then 15-min times. It keeps the position, sets the clock, and back-solves the walk start.
   - The **▲** marker is draggable.
-  - Map buttons: zoom, fit today, whole trip, text visibility (👁️ shown / hidden / faded) and **☰**, a menu with the path style (walking path / straight lines) and map text size (50/75/100%). The menu works the same on the sketch and live maps.
+  - Map buttons: zoom, fit today, whole trip, text visibility (👁️ shown / hidden / faded), text size (50/75/100%) and **☰**. The ☰ menu has the path style (walking path / straight lines) and the daylight band on/off, plus, on the built page only (injected by `build_live.py`), the live-map background.
 
 ### Live mode (src/live_addon.js)
 
-- **Map:** Leaflet is aliased as **`LF`**. The base layer is GSI topo tiles (`cyberjapandata.gsi.go.jp`), with pale, aerial photo and OSM as alternatives. Attribution is required, and it's already in place.
+- **Map:** Leaflet is aliased as **`LF`**. The background is picked in ☰ (`setBase`, `BASES`): **Quiet** (default), Pale, Topo, Aerial (all GSI) or OSM. Attribution is required, and it's already in place.
+- **Quiet** is drawn by hand from GSI's vector tiles (`experimental_bvmap`, CORS-open). `mvtDecode` is a small built-in Mapbox Vector Tile reader, so no extra library is needed. `quietDraw` paints only `contour` (50 m index lines darker), `waterarea` and `river` onto canvas tiles, and adds `label` features with `annoCtg` 210/220 (villages, hamlets) as Leaflet markers in the `qlabels` pane, but only if they're within 1.2 km of any day's path (`nearTrail`). Names show as romaji from the kana reading (`romaji()`, simplified Hepburn without macrons) plus the kanji.
 - **`drawLive()`:** redraws the overlays (zones, stops with tooltips, tour legs, inns, the draggable squirrel marker that snaps to the trail, the GPS dot and its accuracy circle). It runs at the end of every `render()`.
 - **`setHere(ll)`:** the blue-dot popup button.
   1. Snap to the nearest trail of any day (`snapAnyDay`).

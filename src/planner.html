@@ -76,6 +76,7 @@
   .toggle button[aria-pressed="true"]{background:var(--ai-soft);color:var(--ai);font-weight:800}
 
   .mapwrap{position:relative;min-height:0;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:var(--paper)}
+  #sky{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:blur(9px)}
   #map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
   .status{grid-column:1 / span 2;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;border-top:1px dashed var(--line);padding-top:4px;height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}
   .status::-webkit-scrollbar{display:none}
@@ -88,7 +89,7 @@
   .badge.bad{background:rgba(253,230,223,.95);border-color:var(--shu)}
   .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:5px}
   .zoom button{appearance:none;width:36px;height:36px;border-radius:12px;border:2px solid var(--line);background:rgba(255,253,248,.95);font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink)}
-  .sw.zgo,.sw.zback,.sw.zcommit{border-top:0;height:8px;border-radius:4px}.sw.zgo{background:rgba(90,154,91,.45)}.sw.zback{background:rgba(233,195,44,.75)}.sw.zcommit{background:rgba(228,87,46,.7)}.sw.znobus{border-top:0;height:8px;border-radius:4px;background:rgba(142,27,58,.7)}
+  .sw.zgo,.sw.zback,.sw.zcommit{border-top:0;height:8px;border-radius:4px}.sw.zgo{background:rgba(90,154,91,.45)}.sw.zback{background:rgba(233,195,44,.75)}.sw.zcommit{background:rgba(228,87,46,.7)}.sw.sky{border-top:0;height:8px;border-radius:4px;background:linear-gradient(90deg,#fff1c4,#ffd98f,#ff9f6e,#c48bc6,#2c3566)}.sw.znobus{border-top:0;height:8px;border-radius:4px;background:rgba(142,27,58,.7)}
   .legend{position:absolute;left:8px;bottom:8px;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
   .sw{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
   .stn{display:inline-block;width:10px;height:10px;border:2px solid var(--ai);border-radius:3px;background:#fff;vertical-align:middle;margin-right:4px}
@@ -149,6 +150,7 @@
   </div>
 
   <div class="mapwrap" id="mapwrap">
+    <svg id="sky" aria-hidden="true"></svg>
     <svg id="map" role="img" aria-label="Zoomable sketch map of the whole Nakasendo trip"></svg>
     <div class="zoom">
       <button type="button" id="zin" aria-label="Zoom in">＋</button>
@@ -156,15 +158,16 @@
       <button type="button" id="zday" aria-label="Fit today's walk" title="Fit today">📍</button>
       <button type="button" id="ztrip" aria-label="Show whole trip" title="Whole trip">🗾</button>
       <button type="button" id="ztxt" aria-label="Map text: shown" title="Map text: shown → hidden → faded">👁️</button>
-      <button type="button" id="zmenu" aria-label="Map look: paths and text size" title="Map look: paths and text size" aria-expanded="false" aria-controls="menu">☰</button>
+      <button type="button" id="zsize" aria-label="Map text size" title="Map text size" style="font-weight:800">Aa</button>
+      <button type="button" id="zmenu" aria-label="Map look" title="Map look" aria-expanded="false" aria-controls="menu">☰</button>
     </div>
     <div class="menu" id="menu" role="dialog" aria-label="Map look" hidden>
       <div class="mrow"><span>🥾 Paths</span><div class="toggle" id="mPaths" role="group" aria-label="How to draw the walks"><button type="button" data-v="walk">Walking path</button><button type="button" data-v="straight">Straight lines</button></div></div>
-      <div class="mrow"><span>Aa Text size</span><div class="toggle" id="mSize" role="group" aria-label="Map text size"><button type="button" data-v="0.5">50%</button><button type="button" data-v="0.75">75%</button><button type="button" data-v="1">100%</button></div></div>
-      <div class="fine">Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
+      <div class="mrow"><span>🌗 Daylight band</span><div class="toggle" id="mSky" role="group" aria-label="Daylight band along the walk"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+      <div class="fine">The daylight band shades the walk by the light when you'd be there: pale by day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark. Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
-      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgOsm">trail © OpenStreetMap</span>
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
     </div>
     <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
     <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
@@ -199,6 +202,13 @@ const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const SUNSET = hm("16:40"), LUNCH = 45, TWILIGHT = 27;
 const SUN_BY_DAY = {d2:"16:42", d3:"16:41", d4:"16:40", d5:"16:39", d6:"16:38", d7:"16:34"};
 const sunsetOf = d => hm(SUN_BY_DAY[d.key] || "16:40"), darkOf = d => sunsetOf(d) + TWILIGHT;
+/* the light at a time of day (mid-November: sunrise ≈ 6:15), for the daylight band */
+const SKY_STOPS = d => { const ss = sunsetOf(d), dk = darkOf(d);
+  return [[hm("5:30"),"#2c3566"],[hm("6:15"),"#f3b9a3"],[hm("7:15"),"#fff1c4"],[hm("13:00"),"#fff1c4"],[ss-75,"#ffd98f"],[ss,"#ff9f6e"],[ss+13,"#c48bc6"],[dk,"#6a5a9e"],[dk+35,"#2c3566"]]; };
+const mixHex = (a, b, f) => "#" + [1,3,5].map(i => Math.round(parseInt(a.slice(i,i+2),16)*(1-f) + parseInt(b.slice(i,i+2),16)*f).toString(16).padStart(2,"0")).join("");
+function skyAt(d, t){ const st = SKY_STOPS(d); if (t <= st[0][0]) return st[0][1];
+  for (let i = 1; i < st.length; i++) if (t <= st[i][0]) return mixHex(st[i-1][1], st[i][1], (t - st[i-1][0]) / (st[i][0] - st[i-1][0]));
+  return st.at(-1)[1]; }
 
 /* ---------- places ---------- */
 const P = {   // Nenoue Pass (根の上峠), Torii Pass (鳥居峠) and Sakamoto-juku (坂本宿) are placed from OpenStreetMap
@@ -325,8 +335,8 @@ const INNS = [
 ];
 
 /* ---------- state ---------- */
-const S = {walkOver:{}, txt:2, txtScale:0.5, paths:"walk", day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
-const PREFS = ["paths", "txtScale"];   // look settings from the ☰ menu, remembered on this device
+const S = {walkOver:{}, txt:2, txtScale:0.5, paths:"walk", sky:true, base:"quiet", day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
+const PREFS = ["paths", "txtScale", "sky", "base"];   // look settings from the ☰ menu, remembered on this device
 try { const sv = JSON.parse(localStorage.getItem("nakasendo.look") || "{}"); PREFS.forEach(k => { if (sv[k] != null) S[k] = sv[k]; }); } catch (e) {}
 const savePrefs = () => { try { localStorage.setItem("nakasendo.look", JSON.stringify(Object.fromEntries(PREFS.map(k => [k, S[k]])))); } catch (e) {} };
 const startOf = d => S.starts[d.key] ?? d.walkStart;            // ▲ = when you leave the inn
@@ -418,6 +428,8 @@ const llAt = (d, km) => { const g = geomOf(d); let lo = 0, hi = g.length - 1;
 /* lat/lng slice of a day's walk between two km marks */
 const sliceLL = (d, a, b) => [llAt(d, a), ...geomOf(d).filter(v => v.km > a && v.km < b).map(v => v.ll), llAt(d, b)];
 const lineLL = d => geomOf(d).map(v => v.ll);
+/* daylight band: points along the day's walk with the colour of the light when you'd be there (used by both maps) */
+const skySamples = (d, n = 160) => Array.from({length:n+1}, (_, i) => { const km = total(d)*i/n; return {km, ll:llAt(d, km), col:skyAt(d, T(d, km, S.pace))}; });
 const nextDep = (deps, t) => deps.find(x => x >= t - 0.01);
 const afterDep = (deps, dep) => dep == null ? null : deps.find(x => x > dep + 0.01);
 
@@ -487,7 +499,7 @@ const unscr = ([x,y]) => [(x-V.tx)/V.k, (y-V.ty)/V.k];
 let K_MIN = 1, K_MAX = 1;
 function sizeMap(){
   const r = wrap.getBoundingClientRect(); W = Math.max(240, r.width); H = Math.max(200, r.height);
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); $("sky").setAttribute("viewBox", `0 0 ${W} ${H}`);
   K_MIN = Math.min(W/BW, H/BH) * 0.85; K_MAX = K_MIN * 90;
 }
 function clampView(){
@@ -581,6 +593,23 @@ function placeLabels(){
   return S.txt === 2 ? `<g opacity=".5">${out}</g>` : out;
 }
 
+/* the daylight band: a soft, smoothed curve along today's walk (blurred by CSS), coloured by the light when you'd be there */
+function skyBand(d, pxPerKm){
+  let q = skySamples(d).map(v => ({p:scr(v.ll), col:v.col}));
+  for (let pass = 0; pass < 3; pass++)   // smooth the line so the band follows the walk without its wiggles
+    q = q.map((v, i) => { if (i === 0 || i === q.length-1) return v; const a = q[Math.max(0,i-2)].p, b = q[i-1].p, c = q[i+1].p, e = q[Math.min(q.length-1,i+2)].p;
+      return {col:v.col, p:[(a[0]+b[0]+v.p[0]+c[0]+e[0])/5, (a[1]+b[1]+v.p[1]+c[1]+e[1])/5]}; });
+  const w = Math.min(Math.max(pxPerKm*0.9, 30), 80), m = w*2, off = p => p[0] < -m || p[0] > W+m || p[1] < -m || p[1] > H+m;
+  let out = "";
+  for (let i = 0; i < q.length-1; i++){   // Catmull-Rom → cubic Bézier, one piece per sample, each in its own light
+    const p0 = q[Math.max(0,i-1)].p, p1 = q[i].p, p2 = q[i+1].p, p3 = q[Math.min(q.length-1,i+2)].p;
+    if (off(p1) && off(p2)) continue;
+    const c1 = [p1[0] + (p2[0]-p0[0])/6, p1[1] + (p2[1]-p0[1])/6], c2 = [p2[0] - (p3[0]-p1[0])/6, p2[1] - (p3[1]-p1[1])/6];
+    out += `<path d="M${p1[0].toFixed(1)} ${p1[1].toFixed(1)}C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}" stroke="${q[i].col}"/>`;
+  }
+  return `<g fill="none" stroke-width="${w.toFixed(0)}" stroke-linecap="round" opacity=".75">${out}</g>`;
+}
+
 /* a cute squirrel facing right (feet at 0,0) */
 function squirrel(x, y, s, acc){
   const body="#c9824f", tail="#b06a3c", cream="#f8e6cc", dark="#3b2a22";
@@ -632,7 +661,7 @@ function render(){
   const d = D(), pace = S.pace, km = S.km;
   const {fwd, back} = compute();
   LABELS = []; OBST = [];
-  let g = `<rect width="${W}" height="${H}" fill="#fbf6ec"/>`;
+  let g = "";
   for (let i=0;i<6;i++) g += `<circle cx="${W-6}" cy="${H-6}" r="${18+i*13}" fill="none" stroke="#f4a7b9" stroke-opacity=".22" stroke-width="2"/>`;
   g += `<defs><marker id="arrF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2e8b3e"/></marker><marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e08a12"/></marker>
         <marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d5a99"/></marker></defs>`;
@@ -730,6 +759,7 @@ function render(){
   }
   if (S.txt === 0) g += LBL;
   svg.innerHTML = g;
+  $("sky").innerHTML = S.sky ? skyBand(d, pxPerKm) : "";
   WALKER = [wx, wy];
   renderText(fwd, back);
 }
@@ -945,18 +975,21 @@ svg.addEventListener("wheel", e => { e.preventDefault(); zoomAt(local(e), Math.e
 function zoomAt(p, f){ const k = Math.min(Math.max(V.k*f, K_MIN), K_MAX), wx = (p[0]-V.tx)/V.k, wy = (p[1]-V.ty)/V.k; V.k = k; V.tx = p[0]-wx*k; V.ty = p[1]-wy*k; clampView(); render(); }
 $("zin").onclick = () => zoomAt([W/2,H/2], 1.5);
 const TXT_STATES = [["👁️","shown"], ["🙈","hidden"], ["🌫️","faded to 50%"]];
-function txtButtons(){ const [ic, nm] = TXT_STATES[S.txt]; $("ztxt").textContent = ic; $("ztxt").setAttribute("aria-label", `Map text: ${nm}`); $("ztxt").title = `Map text: ${nm} (tap: shown → hidden → faded)`;
+function txtButtons(){ const pc = Math.round(S.txtScale*100); $("zsize").textContent = pc + "%"; $("zsize").style.fontSize = "10.5px";
+  $("zsize").setAttribute("aria-label", `Map text size: ${pc}% (tap: 50 → 75 → 100%)`); $("zsize").title = `Map text size: ${pc}% (tap: 50 → 75 → 100%)`;
+  const [ic, nm] = TXT_STATES[S.txt]; $("ztxt").textContent = ic; $("ztxt").setAttribute("aria-label", `Map text: ${nm}`); $("ztxt").title = `Map text: ${nm} (tap: shown → hidden → faded)`;
   const lg = $("legend"); lg.style.display = S.txt === 1 ? "none" : ""; lg.style.opacity = S.txt === 2 ? ".5" : ""; lg.style.fontSize = S.txtScale < 1 ? (S.txtScale < .6 ? "8px" : "9.5px") : ""; }
 $("ztxt").onclick = () => { S.txt = (S.txt + 1) % 3; txtButtons(); render(); };
+$("zsize").onclick = () => { S.txtScale = S.txtScale < .6 ? .75 : S.txtScale < .9 ? 1 : .5; savePrefs(); txtButtons(); render(); };
 /* ☰ menu: how the walks are drawn, and map text size (both maps) */
 function menuSync(){
   document.querySelectorAll("#mPaths button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.paths ? "true" : "false"));
-  document.querySelectorAll("#mSize button").forEach(b => b.setAttribute("aria-pressed", Math.abs(+b.dataset.v - S.txtScale) < .01 ? "true" : "false"));
-  $("lgOsm").hidden = S.paths !== "walk"; $("zmenu").setAttribute("aria-expanded", $("menu").hidden ? "false" : "true"); }
+  document.querySelectorAll("#mSky button").forEach(b => b.setAttribute("aria-pressed", (b.dataset.v === "1") === S.sky ? "true" : "false"));
+  $("lgSky").hidden = !S.sky; $("lgOsm").hidden = S.paths !== "walk"; $("zmenu").setAttribute("aria-expanded", $("menu").hidden ? "false" : "true"); }
 const menuShow = on => { $("menu").hidden = !on; menuSync(); };
 $("zmenu").onclick = () => menuShow($("menu").hidden);
 document.querySelectorAll("#mPaths button").forEach(b => b.onclick = () => { S.paths = b.dataset.v; savePrefs(); menuSync(); render(); });
-document.querySelectorAll("#mSize button").forEach(b => b.onclick = () => { S.txtScale = +b.dataset.v; savePrefs(); menuSync(); txtButtons(); render(); });
+document.querySelectorAll("#mSky button").forEach(b => b.onclick = () => { S.sky = b.dataset.v === "1"; savePrefs(); menuSync(); render(); });
 document.addEventListener("pointerdown", e => { if (!$("menu").hidden && !$("menu").contains(e.target) && !$("zmenu").contains(e.target)) menuShow(false); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("menu").hidden) { menuShow(false); $("zmenu").focus(); } });
 $("zout").onclick = () => zoomAt([W/2,H/2], 1/1.5);
