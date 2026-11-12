@@ -248,7 +248,7 @@ const DEP = {
 /* ---------- days ---------- */
 const pt = (km, ll, name, kind, up=0, down=0, hop=null) => ({km, ll, name, kind, up, down, hop});
 const DAYS = {
-  d2:{chip:"Day 2", date:"Sat 14 Nov", title:"Ena → Nakatsugawa → Magome", walkStart:hm("7:00"), lunchKm:12,
+  d2:{chip:"Day 2", date:"Sat 14 Nov", from:"Ena", to:"Magome", title:"Ena → Nakatsugawa → Magome", walkStart:hm("7:00"), lunchKm:12,
       pts:[
         pt(0, P.ena, "Ena", "stop", 0,0, {mode:"🚃 train", to:"Nakatsugawa", toLL:P.nakatsu, ride:10, deps:DEP.enaTrain, est:true, freqNote:"≈ every 30 min (estimate)"}),
         pt(12, P.nakatsu, "Nakatsugawa Stn", "stop", 150,120, {mode:"🚌 Kitaena bus", to:"Magome", toLL:P.magome, ride:25, deps:DEP.nakatsuBusSat, freqNote:"hourly (Sat)", via:[P.ochiai]}),
@@ -256,20 +256,20 @@ const DAYS = {
         pt(16.3, P.ishi, "Stone-paved path", "pass", 80,0),
         pt(18, P.magome, "Magome", "end", 150,10)
       ]},
-  d3:{chip:"Day 3", date:"Sun 15 Nov", title:"Magome → O-Tsumago", walkStart:hm("7:00"), lunchKm:null,
+  d3:{chip:"Day 3", date:"Sun 15 Nov", from:"Magome", to:"Otsumago", title:"Magome → O-Tsumago", walkStart:hm("7:00"), lunchKm:null,
       pts:[
         pt(0, P.magome, "Magome bus stop", "stop", 0,0, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:21, deps:DEP.magomeBus, freqNote:"4 a day", via:[P.magomeToge, P.odaki]}),
         pt(3, P.magomeToge, "Magome Pass", "stop", 230,20, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:10, deps:DEP.togeBus, freqNote:"4 a day", via:[P.odaki]}),
         pt(5.5, P.odaki, "Odaki/Medaki Falls", "stop", 10,230, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:5, deps:DEP.odaruBus, freqNote:"4 a day"}),
         pt(6.5, P.otsumago, "Otsumago", "end", 20,60)
       ]},
-  d4B:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nagiso (Course B)", walkStart:hm("7:00"), lunchKm:null,
+  d4B:{chip:"Day 4", date:"Mon 16 Nov", from:"Otsumago", to:"Nagiso", title:"O-Tsumago → Nagiso (Course B)", walkStart:hm("7:00"), lunchKm:null,
       pts:[
         pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day", via:[P.tsumago]}),
         pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
         pt(8, P.nagiso, "Nagiso Stn", "end", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h", via:[P.nojiri]})
       ]},
-  d4A:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nenoue Pass → Nojiri (Course A)", walkStart:hm("7:00"), lunchKm:14,
+  d4A:{chip:"Day 4", date:"Mon 16 Nov", from:"Otsumago", to:"Nojiri", title:"O-Tsumago → Nenoue Pass → Nojiri (Course A)", walkStart:hm("7:00"), lunchKm:14,
       pts:[
         pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day", via:[P.tsumago]}),
         pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
@@ -277,7 +277,7 @@ const DAYS = {
         pt(14, P.nenoue, "≈ Nenoue Pass", "pass", 550,50),
         pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:40, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
-  d5:{chip:"Day 5", date:"Tue 17 Nov", title:"Karasawa Falls → Kaida Plateau", walkStart:hm("7:00"), lunchKm:6, before:"the tour taxi to Karasawa Falls", transfer:{kind:"taxi", mins:25},
+  d5:{chip:"Day 5", date:"Tue 17 Nov", from:"Karasawa Falls", to:"Kaida Kogen", title:"Karasawa Falls → Kaida Plateau", walkStart:hm("7:00"), lunchKm:6, before:"the tour taxi to Karasawa Falls", transfer:{kind:"taxi", mins:25},
       // skip the walk: the same Kaida bus runs from Kiso-Fukushima Stn (5 min from Iwaya Inn) straight to tonight's inn
       skip:{mode:"🚌 Kaida bus", from:"Kiso-Fukushima Stn", fromLL:P.kisoF, walkMins:5, to:"Yamakanoyu", toLL:P.yamaka, deps:DEP.kisoFKaida, arrs:DEP.kisoFKaidaArr, via:[P.kaidaInfo, P.kaidaShisho]},
       pts:[
@@ -288,14 +288,14 @@ const DAYS = {
         pt(11, P.nishino, "≈ Nishino Pass", "pass", 200,0),
         pt(13, P.yamaka, "Yamakanoyu", "end", 10,150)
       ]},
-  d6:{chip:"Day 6", date:"Wed 18 Nov", title:"Yabuhara → Torii Pass → Narai", walkStart:hm("7:00"), lunchKm:null, before:"the tour vehicle and train to Yabuhara", transfer:{kind:"vehicle+train", mins:45, trains:"KF", ride:20},
+  d6:{chip:"Day 6", date:"Wed 18 Nov", from:"Yabuhara", to:"Narai", title:"Yabuhara → Torii Pass → Narai", walkStart:hm("7:00"), lunchKm:null, before:"the tour vehicle and train to Yabuhara", transfer:{kind:"vehicle+train", mins:45, trains:"KF", ride:20},
       pts:[
         pt(0, P.yabuhara, "Yabuhara Stn", "stop", 0,0, {mode:"🚃 JR train", to:"Narai", toLL:P.narai, ride:6, deps:DEP.yabuharaTrain, est:true, freqNote:"every 1–2 h (≈)",
           on:[{name:"Shiojiri", ll:P.shiojiri}]}),   // on = further stops of tonight's journey the same train runs on to (no change needed)
         pt(4, P.torii, "≈ Torii Pass", "pass", 300,20),
         pt(9, P.narai, "Narai Stn", "end", 50,330, {mode:"🚃 JR train", to:"Shiojiri", toLL:P.shiojiri, ride:20, deps:DEP.naraiTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
-  d7:{chip:"Day 7", date:"Thu 19 Nov", title:"Karuizawa → Usui Pass → Yokokawa", walkStart:hm("7:00"), lunchKm:9,
+  d7:{chip:"Day 7", date:"Thu 19 Nov", from:"Karuizawa", to:"Yokokawa", title:"Karuizawa → Usui Pass → Yokokawa", walkStart:hm("7:00"), lunchKm:9,
       pts:[
         pt(0, P.grandKyu, "Le Grand Kyu", "stop", 0,0, {mode:"🚌 Usui line bus", at:P.karuizawaStn, atName:"Karuizawa Stn", extraKm:1, to:"Yokokawa", toLL:P.yokokawa, ride:34, deps:DEP.usuiBus, freqNote:"8 a day (or shinkansen)"}),
         pt(4, P.kumano, "Usui Pass", "stop", 250,10, {mode:"🚌 Aka Bus (down)", to:"Kyu-Karuizawa", toLL:P.kyuKaru, ride:20, deps:DEP.akaBusDown, weather:true, freqNote:"5 down a day; cancelled in fog"}),
@@ -384,6 +384,9 @@ function journeyOf(d){   // the planned tour transport, timed: morning transfer 
                             {a:P.takasaki, b:[36.20,139.30], from:"Takasaki", wait:10, ride:50, mode:"shinkansen", what:"shinkansen", to:"Tokyo", est:true}]);
   return segs;
 }
+/* a day's start place and end village on the map: "🚩 Ena", "🏁 Kaida Kogen · Yamakanoyu" */
+const placeName = (d, p) => { const i = d.pts.indexOf(p), nm = i === 0 ? d.from : i === d.pts.length - 1 ? d.to : null;
+  return nm == null ? p.name : `${i === 0 ? "🚩" : "🏁"} ${p.name.startsWith(nm) ? p.name : `${nm} · ${p.name}`}`; };
 const segAt = (d, t) => journeyOf(d).find(g => t >= g.t0 && t < g.t1);
 /* a day's "skip the walk" bus (Day 5), offered while you're still at the inn or on the morning transfer */
 function skipOf(d, t){ const s = d.skip; if (!s || S.walkOver[d.key] != null || t >= walkStartOf(d)) return null;
@@ -789,7 +792,8 @@ function render(){
     const isF = opt && fwd && fwd.p === p && !p.hop?.at, isB = opt && back && !back.off && back.p === p && !p.hop?.at && (!fwd || back.p !== fwd.p);
     if (isF || isB) g += `<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="${isF ? "#2e8b3e" : "#e08a12"}" stroke-width="3"/>`;
     const lt = isF ? fwd.arr : isB ? back.arr : T(d, p.km, pace);
-    addLabel(x, y, (isF || isB) ? `${isF ? "➡️ " : "↩️ "}${p.name}` : `${p.name} · ${fmt(lt)}${icon}`, isF ? "#2e8b3e" : isB ? "#c0700a" : "#3b2f2a", {tail: (isF || isB) ? ` · arrive @ ${fmt(lt)}${icon}` : "",boxed: isF || isB, bold: isF || isB, pri: isF || isB ? 3 : 2, time: (isF || isB) ? lt : null});
+    const ends = p === d.pts[0] || p === d.pts.at(-1);   // start place and end village always named, in bold
+    addLabel(x, y, (isF || isB) ? `${isF ? "➡️ " : "↩️ "}${p.name}` : `${placeName(d, p)} · ${fmt(lt)}${icon}`, isF ? "#2e8b3e" : isB ? "#c0700a" : "#3b2f2a", {tail: (isF || isB) ? ` · arrive @ ${fmt(lt)}${icon}` : "",boxed: isF || isB, bold: isF || isB || ends, pri: isF || isB || ends ? 3 : 2, time: (isF || isB) ? lt : null});
   });
   const tag = (o, label, color) => { const [x,y] = scr(o.p.hop.at || o.p.ll), ic = o.p.hop.mode.split(" ")[0];   // next two departures, one per line
     if (o.dep == null) { addLabel(x, y, `${ic} none left today`, color, {pri:3, bold:true, time:1e9}); return; }

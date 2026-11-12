@@ -63,7 +63,7 @@ It's one inline `<script>`, with sections marked `/* ---------- name ---------- 
   - **Gotcha:** `L` is the planner's timetable parser, which is why Leaflet is aliased to `LF`.
 - **`DAYS`:**
   - Keys: `d2 d3 d4A d4B d5 d6 d7`. `d.key` is `d4` for both Day 4 courses. `ORDER` lists the chips.
-  - Each day has `walkStart`, an optional `lunchKm`, an optional `transfer`, an optional `skip`, and `pts`.
+  - Each day has `from` / `to` (start place and end village), `walkStart`, an optional `lunchKm`, an optional `transfer`, an optional `skip`, and `pts`. `placeName(d, p)` labels the first and last stops "🚩 Ena" / "🏁 Kaida Kogen · Yamakanoyu", in bold on the sketch map and as permanent left-hand tooltips on the live map.
   - **`skip`** (Day 5 only) is a bus that skips the whole walk: the Kaida bus from Kiso-Fukushima Stn (5 min from Iwaya Inn) straight to Yamakanoyu. Its times (`DEP.kisoFKaida` / `kisoFKaidaArr`) come from the official Kiso bus 開田幹線 timetable (Oct 2026), so they aren't estimates; the Kaida Shisho times match the same timetable. `skipOf(d, t)` offers it only while you're still at the inn or on the morning transfer. Both maps then draw it as a purple dashed line, and it replaces the Turn back card (`.opt.skip`).
   - Each entry in `pts` is `pt(km, ll, name, kind, up, down, hop)`:
     - `kind` is `stop`, `pass` or `end`. A `pass` means a no-exit section.

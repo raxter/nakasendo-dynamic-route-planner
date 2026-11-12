@@ -247,12 +247,13 @@ function drawLive(){
     const col = isF ? "#2e8b3e" : isB ? "#e08a12" : p.kind === "pass" ? "#5a9a5b" : "#3b2f2a";
     const t = isF ? fwd.arr : isB ? back.arr : T(d, p.km, pace);
     const o = isF ? fwd : isB ? back : null;
-    let tip = `<b>${esc(p.name)}</b> · ${isF || isB ? "arrive @ " : ""}${fmt(t)}`;
+    const ends = p === d.pts[0] || p === d.pts.at(-1);   // start place and end village always named
+    let tip = `<b>${esc(isF || isB ? p.name : placeName(d, p))}</b> · ${isF || isB ? "arrive @ " : ""}${fmt(t)}`;
     if (o && !o.noBus && o.dep != null) tip += `<br>${p.hop.mode.split(" ")[0]} ${fmt(o.dep)} · wait ${dur(o.wait)}` + (o.dep2 != null ? `<br>${p.hop.mode.split(" ")[0]} ${fmt(o.dep2)} · wait ${dur(o.dep2 - o.arr)}` : " · last one!");
     else if (o && o.noBus) tip += `<br>no ${esc(p.hop.mode.split(" ").slice(1).join(" "))} left today`;
     else if (p.hop) tip += ` ${p.hop.mode.split(" ")[0]}`;
     LF.circleMarker(p.ll, {radius: p.kind === "end" ? 8 : 6, color: col, weight: 3, fillColor: "#fff", fillOpacity: 1}).addTo(LLAYER)
-      .bindTooltip(tip, {permanent: S.txt !== 1 && (isF || isB || p.kind === "end"), direction: "right", className: "live-tip" + (isF ? " f" : isB ? " b" : "") + (S.txt === 2 ? " faded" : "")});
+      .bindTooltip(tip, {permanent: S.txt !== 1 && (isF || isB || ends), direction: ends && !isF && !isB ? "left" : "right", className: "live-tip" + (isF ? " f" : isB ? " b" : "") + (S.txt === 2 ? " faded" : "")});
     if (p.hop?.at) LF.polyline([p.ll, p.hop.at], {color: col, weight: 2, dashArray: "2 5"}).addTo(LLAYER);
   });
   // the bus/train you'd catch: dashed line through the stops it passes, a dot where you'd get off, grey if the same train runs on
