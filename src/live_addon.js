@@ -62,15 +62,18 @@ function nearTrail(ll, m){
 const QUIET_URL = (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${z}/${x}/${y}.pbf`;
 const GSI_ATTR = '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>';
 function makeQuietLayer(){
-  const labels = LF.layerGroup(), byTile = new Map(), live = new Map();
+  const labels = LF.layerGroup(), byTile = new Map(), live = new Map(), stat = {ok: 0, bad: 0, err: ""};
+  const failed = e => { stat.bad++; stat.err = stat.err || String(e && e.message || e);
+    if (stat.ok === 0 && stat.bad >= 4 && BASE_ON === q){   // nothing has drawn: don't leave a blank map
+      setBase("pale", true); liveToast(`The Quiet map couldn't load here (${stat.err}), so I've switched to Pale. ☰ → Live map to change.`); } };
   const Q = LF.GridLayer.extend({
     createTile(c, done){
       const cv = document.createElement("canvas"), r = Math.min(window.devicePixelRatio || 1, 2), sz = this.getTileSize();
       cv.width = sz.x * r; cv.height = sz.y * r;
       const ctx = cv.getContext("2d"); ctx.fillStyle = "#fbf6ec"; ctx.fillRect(0, 0, cv.width, cv.height);
-      fetch(QUIET_URL(c.z, c.x, c.y)).then(res => res.ok ? res.arrayBuffer() : null).then(buf => {
-        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); done(null, cv);
-      }).catch(() => done(null, cv));
+      fetch(QUIET_URL(c.z, c.x, c.y)).then(res => { if (res.status === 404) return null; if (!res.ok) throw new Error("tile HTTP " + res.status); return res.arrayBuffer(); }).then(buf => {
+        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); stat.ok++; done(null, cv);
+      }).catch(e => { failed(e); done(null, cv); });
       return cv; },
     onAdd(map){ LF.GridLayer.prototype.onAdd.call(this, map); labels.addTo(map); },
     onRemove(map){ LF.GridLayer.prototype.onRemove.call(this, map); map.removeLayer(labels); }
@@ -103,9 +106,10 @@ function quietDraw(ctx, Ls, px, r, c, layer, labels, byTile, live){
 }
 
 let BASES = null, BASE_ON = null, SKYR = null;
-function setBase(k){
+function setBase(k, auto){
   if (!LMAP) return;
   const b = BASES[k] || BASES.quiet; if (b === BASE_ON) return;
+  if (auto){ S.base = k; menuSync(); }   // automatic fallback: shown in the menu, not saved
   if (BASE_ON) LMAP.removeLayer(BASE_ON);
   BASE_ON = b.addTo(LMAP); BASE_ON.bringToBack();
 }
@@ -208,7 +212,7 @@ function drawLive(){
       .bindTooltip(o.chip, {sticky: true}); });
   // planned tour transport
   TOUR.forEach(t => { if ((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course) return;
-    LF.polyline([t.a, t.b], {color: "#3d5a99", weight: t.day === selKey ? 4 : 2.5, opacity: t.day === selKey ? .9 : .4, dashArray: "1 8", lineCap: "round"}).addTo(LLAYER); });
+    LF.polyline([t.a, ...(t.via || []), t.b], {color: "#3d5a99", weight: t.day === selKey ? 4 : 2.5, opacity: t.day === selKey ? .9 : .4, dashArray: "1 8", lineCap: "round"}).addTo(LLAYER); });
   // the daylight band (blurred by CSS on its pane), under everything else
   if (S.sky){ const q = skySamples(d, 120);
     for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 34, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
@@ -238,7 +242,7 @@ function drawLive(){
   // the squirrels (or their train / van)
   let ll = llAt(d, km), icon = iconSquirrels(), drag = true;
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
-    ll = [js.a[0] + (js.b[0]-js.a[0])*f, js.a[1] + (js.b[1]-js.a[1])*f];
+    ll = alongPoly([js.a, ...(js.via || []), js.b], f);
     if (js.kind === "ride"){ icon = iconRide(js.mode); drag = false; } }
   else if (pre) ll = journeyOf(d)[0].a;
   const m = LF.marker(ll, {icon, draggable: drag, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);

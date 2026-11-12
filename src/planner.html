@@ -246,29 +246,29 @@ const DAYS = {
   d2:{chip:"Day 2", date:"Sat 14 Nov", title:"Ena → Nakatsugawa → Magome", walkStart:hm("7:00"), lunchKm:12,
       pts:[
         pt(0, P.ena, "Ena", "stop", 0,0, {mode:"🚃 train", to:"Nakatsugawa", toLL:P.nakatsu, ride:10, deps:DEP.enaTrain, est:true, freqNote:"≈ every 30 min (estimate)"}),
-        pt(12, P.nakatsu, "Nakatsugawa Stn", "stop", 150,120, {mode:"🚌 Kitaena bus", to:"Magome", toLL:P.magome, ride:25, deps:DEP.nakatsuBusSat, freqNote:"hourly (Sat)"}),
+        pt(12, P.nakatsu, "Nakatsugawa Stn", "stop", 150,120, {mode:"🚌 Kitaena bus", to:"Magome", toLL:P.magome, ride:25, deps:DEP.nakatsuBusSat, freqNote:"hourly (Sat)", via:[P.ochiai]}),
         pt(15, P.ochiai, "Ochiai-juku", "stop", 60,20, {mode:"🚌 bus (Ochiai stop)", to:"Magome", toLL:P.magome, ride:13, deps:DEP.ochiaiBusSat, est:true, freqNote:"hourly (≈ times)"}),
         pt(16.3, P.ishi, "Stone-paved path", "pass", 80,0),
         pt(18, P.magome, "Magome", "end", 150,10)
       ]},
   d3:{chip:"Day 3", date:"Sun 15 Nov", title:"Magome → O-Tsumago", walkStart:hm("7:00"), lunchKm:null,
       pts:[
-        pt(0, P.magome, "Magome bus stop", "stop", 0,0, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:21, deps:DEP.magomeBus, freqNote:"4 a day"}),
-        pt(3, P.magomeToge, "Magome Pass", "stop", 230,20, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:10, deps:DEP.togeBus, freqNote:"4 a day"}),
+        pt(0, P.magome, "Magome bus stop", "stop", 0,0, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:21, deps:DEP.magomeBus, freqNote:"4 a day", via:[P.magomeToge, P.odaki]}),
+        pt(3, P.magomeToge, "Magome Pass", "stop", 230,20, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:10, deps:DEP.togeBus, freqNote:"4 a day", via:[P.odaki]}),
         pt(5.5, P.odaki, "Odaki/Medaki Falls", "stop", 10,230, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:5, deps:DEP.odaruBus, freqNote:"4 a day"}),
         pt(6.5, P.otsumago, "Otsumago", "end", 20,60)
       ]},
   d4B:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nagiso (Course B)", walkStart:hm("7:00"), lunchKm:null,
       pts:[
-        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day"}),
+        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day", via:[P.tsumago]}),
         pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
-        pt(8, P.nagiso, "Nagiso Stn", "end", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h"})
+        pt(8, P.nagiso, "Nagiso Stn", "end", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h", via:[P.nojiri]})
       ]},
   d4A:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nenoue Pass → Nojiri (Course A)", walkStart:hm("7:00"), lunchKm:14,
       pts:[
-        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day"}),
+        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day", via:[P.tsumago]}),
         pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
-        pt(8, P.nagiso, "Nagiso Stn (last exit)", "stop", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h"}),
+        pt(8, P.nagiso, "Nagiso Stn (last exit)", "stop", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h", via:[P.nojiri]}),
         pt(14, P.nenoue, "≈ Nenoue Pass", "pass", 550,50),
         pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:40, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
@@ -276,7 +276,7 @@ const DAYS = {
       pts:[
         pt(0, P.karasawa, "Karasawa Falls", "stop", 0,0),
         pt(3.5, P.jizo, "≈ Jizo Pass", "pass", 400,0),
-        pt(6, P.kaidaInfo, "Kaida Info Centre", "stop", 0,200, {mode:"🚌 Kaida bus", to:"Yamakanoyu", toLL:P.yamaka, ride:22, deps:DEP.kaidaInfoBus, est:true, freqNote:"roughly hourly (≈ times)"}),
+        pt(6, P.kaidaInfo, "Kaida Info Centre", "stop", 0,200, {mode:"🚌 Kaida bus", to:"Yamakanoyu", toLL:P.yamaka, ride:22, deps:DEP.kaidaInfoBus, est:true, freqNote:"roughly hourly (≈ times)", via:[P.kaidaShisho]}),
         pt(9, P.kaidaShisho, "Kaida Shisho", "stop", 30,30, {mode:"🚌 Kaida bus", to:"Yamakanoyu", toLL:P.yamaka, ride:16, deps:DEP.kaidaShishoBus, freqNote:"roughly hourly"}),
         pt(11, P.nishino, "≈ Nishino Pass", "pass", 200,0),
         pt(13, P.yamaka, "Yamakanoyu", "end", 10,150)
@@ -309,7 +309,7 @@ const TRAIL = Object.fromEntries(Object.entries(TRAIL_ENC).map(([k, segs]) => [k
 /* pre-planned tour transport over the whole trip */
 const TOUR = [
   {day:"d2", a:[35.36,137.20], b:P.ena, label:"🚃 from Nagoya", stub:true},
-  {day:"d4B", a:P.nagiso, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~50 min"},
+  {day:"d4B", a:P.nagiso, b:P.kisoF, via:[P.nojiri], label:"🚃 JR train to Kiso-Fukushima, ~50 min"},
   {day:"d4A", a:P.nojiri, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~40 min"},
   {day:"d4B", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
   {day:"d4A", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
@@ -363,11 +363,11 @@ function journeyOf(d){   // the planned tour transport, timed: morning transfer 
   const chain = legs => { let t = T(d, total(d), S.pace); legs.forEach(l => {
     const dep = l.deps ? (l.deps.find(x => x >= t) ?? t + 30) : t + (l.wait || 0);
     if (dep > t) segs.push({t0:t, t1:dep, grp:"pm", kind:"wait", a:l.a, b:l.a, label:`waiting at ${l.from} for the ${fmt(dep)} ${l.what}`, to:l.from});
-    segs.push({t0:dep, t1:dep + l.ride, grp:"pm", kind: l.walk ? "walk" : "ride", mode:l.mode, a:l.a, b:l.b, label: l.walk ? l.what : `${fmt(dep)} ${l.what} to ${l.to}${l.est ? " (≈)" : ""}`, to:l.to});
+    segs.push({t0:dep, t1:dep + l.ride, grp:"pm", kind: l.walk ? "walk" : "ride", mode:l.mode, a:l.a, b:l.b, via:l.via, label: l.walk ? l.what : `${fmt(dep)} ${l.what} to ${l.to}${l.est ? " (≈)" : ""}`, to:l.to});
     t = dep + l.ride; });
     const z = segs.at(-1); segs.push({t0:z.t1, t1:1e9, grp:"pm", kind:"wait", done:true, a:z.b, b:z.b, label:`at ${z.to}`, to:z.to}); };
   const toIwaya = {a:P.kisoF, b:P.iwaya, ride:5, walk:true, what:"walking to Iwaya Inn", to:"Iwaya Inn"};
-  if (d === DAYS.d4B) chain([{a:P.nagiso, b:P.kisoF, from:"Nagiso Stn", deps:DEP.nagisoTrain, ride:50, mode:"train", what:"train", to:"Kiso-Fukushima"}, toIwaya]);
+  if (d === DAYS.d4B) chain([{a:P.nagiso, b:P.kisoF, via:[P.nojiri], from:"Nagiso Stn", deps:DEP.nagisoTrain, ride:50, mode:"train", what:"train", to:"Kiso-Fukushima"}, toIwaya]);
   if (d === DAYS.d4A) chain([{a:P.nojiri, b:P.kisoF, from:"Nojiri Stn", deps:DEP.nojiriTrain, ride:40, mode:"train", what:"train", to:"Kiso-Fukushima", est:true}, toIwaya]);
   if (d === DAYS.d6) chain([{a:P.narai, b:P.shiojiri, from:"Narai Stn", deps:DEP.naraiTrain, ride:25, mode:"train", what:"train", to:"Shiojiri", est:true},
                             {a:P.shiojiri, b:P.nagano, from:"Shiojiri", wait:15, ride:50, mode:"train", what:"Shinano express", to:"Nagano", est:true},
@@ -381,6 +381,16 @@ const segAt = (d, t) => journeyOf(d).find(g => t >= g.t0 && t < g.t1);
 function bowPt(p, q, f, k=0.14, cap=40){ const vx = q[0]-p[0], vy = q[1]-p[1], l = Math.hypot(vx,vy) || 1, off = Math.min(l*k, cap);
   const c = [(p[0]+q[0])/2 - vy/l*off, (p[1]+q[1])/2 + vx/l*off], u = 1-f;
   return [u*u*p[0] + 2*u*f*c[0] + f*f*q[0], u*u*p[1] + 2*u*f*c[1] + f*f*q[1]]; }
+/* a smooth line through points (Catmull-Rom, sampled into a polyline), and a point a fraction of the way along a polyline */
+function smoothThrough(pts, per = 10){ if (pts.length < 3) return pts; const out = [pts[0]];
+  for (let i = 0; i < pts.length-1; i++){ const p0 = pts[Math.max(0,i-1)], p1 = pts[i], p2 = pts[i+1], p3 = pts[Math.min(pts.length-1,i+2)];
+    for (let k = 1; k <= per; k++){ const t = k/per, t2 = t*t, t3 = t2*t;
+      out.push([0,1].map(j => 0.5*(2*p1[j] + (p2[j]-p0[j])*t + (2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2 + (3*p1[j]-p0[j]-3*p2[j]+p3[j])*t3))); } }
+  return out; }
+function alongPoly(pts, f){ const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+  const want = Math.min(Math.max(f, 0), 1) * L.at(-1);
+  for (let i = 1; i < pts.length; i++) if (L[i] >= want){ const g = (want - L[i-1]) / ((L[i] - L[i-1]) || 1); return [pts[i-1][0] + (pts[i][0]-pts[i-1][0])*g, pts[i-1][1] + (pts[i][1]-pts[i-1][1])*g]; }
+  return pts.at(-1); }
 const D = () => S.day === "d4" ? DAYS["d4"+S.course] : DAYS[S.day];
 const dayObj = k => k === "d4" ? DAYS["d4"+S.course] : DAYS[k];
 
@@ -678,7 +688,7 @@ function render(){
     const c = [(p[0]+q[0])/2 - vy/l*off, (p[1]+q[1])/2 + vx/l*off]; return {d:`M${p[0].toFixed(1)} ${p[1].toFixed(1)} Q${c[0].toFixed(1)} ${c[1].toFixed(1)} ${q[0].toFixed(1)} ${q[1].toFixed(1)}`, mid:[(p[0]+2*c[0]+q[0])/4, (p[1]+2*c[1]+q[1])/4]}; };
   const showTour = t => !((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course);
   TOUR.forEach(t => { if (!showTour(t)) return;
-    const pa = scr(t.a), pb = scr(t.b), mine = t.day === selKey, bw = bow(pa, pb);
+    const pa = scr(t.a), pb = scr(t.b), mine = t.day === selKey, bw = t.via ? (q => ({d:path(q), mid:alongPoly(q, .5)}))(smoothThrough([pa, ...t.via.map(scr), pb])) : bow(pa, pb);
     g += `<path d="${bw.d}" stroke="#3d5a99" stroke-opacity="${mine?1:.4}" stroke-width="${mine?4:2.5}" stroke-dasharray="${t.short ? "1 5" : "1 7"}" stroke-linecap="round" fill="none" marker-end="url(#arrA)"/>`;
     const lab = t.dyn != null ? transferOf(DAYS[t.day])?.legs[t.dyn]?.label : t.label;
     if (mine && lab) addLabel(bw.mid[0], bw.mid[1], lab, "#3d5a99", {pri:2, size:11});
@@ -704,8 +714,13 @@ function render(){
   const isTourLeg = o => TOUR.some(t => t.day === selKey && near(t.a, o.p.hop.at || o.p.ll) && near(t.b, o.p.hop.toLL));   // same trip as the planned train: draw it once
   const hopLine = (o, side, color, marker) => { if (isTourLeg(o)) return ""; const h = o.p.hop, from = scr(h.at || o.p.ll), to = scr(h.toLL);
     if (Math.hypot(to[0]-from[0], to[1]-from[1]) < 8) return "";
-    let out = `<path d="${arcPath(from, to, side)}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round"/>`
-      + `<path d="${arcPath(from, to, side)}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" marker-end="url(#${marker})"/>`
+    let dd = arcPath(from, to, side), stops = [];
+    if (h.via?.length){   // the ride passes stops on the way: run the line through them (nudged to one side so it doesn't sit on the walk)
+      const vx = to[0]-from[0], vy = to[1]-from[1], l = Math.hypot(vx, vy) || 1, nx = -vy/l*10*side, ny = vx/l*10*side;
+      stops = h.via.map(scr).map(q => [q[0]+nx, q[1]+ny]); dd = path(smoothThrough([from, ...stops, to])); }
+    let out = `<path d="${dd}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${dd}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#${marker})"/>`
+      + stops.map(q => `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="${color}" stroke-width="2"/>`).join("")
       + `<circle cx="${to[0]}" cy="${to[1]}" r="6" fill="${color}" stroke="#fff" stroke-width="2"/>`;
     if (o.dep != null && h.ride) addLabel(to[0], to[1], `${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${h.to} ~${fmt(o.dep + h.ride)}`, side > 0 ? "#2e8b3e" : "#c0700a", {pri:2, boxed:true, time:o.dep + h.ride});
     if (h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
@@ -737,7 +752,7 @@ function render(){
   // squirrels: walking, or riding the planned tour transport together
   let [wx,wy] = scr(llAt(d, km));
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0)/Math.max(js.t1 - js.t0, 1), a = scr(js.a), b = scr(js.b);
-    [wx, wy] = js.kind === "ride" ? bowPt(a, b, f) : [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; }
+    [wx, wy] = js.kind === "ride" ? (js.via ? alongPoly(smoothThrough([a, ...js.via.map(scr), b]), f) : bowPt(a, b, f)) : [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; }
   if (pre) [wx, wy] = scr(pre.a);
   OBST.push(js && js.kind === "ride" ? {x:wx-38,y:wy-44,w:76,h:46} : {x:wx-20,y:wy-50,w:40,h:52});
   const LBL = `<g pointer-events="none">${placeLabels()}</g>`;   // full-strength text sits over the squirrels, faded text under them
