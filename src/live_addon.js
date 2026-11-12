@@ -215,7 +215,7 @@ function iconSquirrels(){
   return LF.divIcon({className: "sq-icon", iconSize: [96, 66], iconAnchor: [74, 62],
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
-function iconPin(){ return LF.divIcon({className: "sq-icon", iconSize: [48, 66], iconAnchor: [24, 62], html: `<svg width="48" height="66" viewBox="0 0 48 66">${pin(24, 62)}</svg>`}); }
+function iconPin(rain){ return LF.divIcon({className: "sq-icon", iconSize: [64, 80], iconAnchor: [26, 76], html: `<svg width="64" height="80" viewBox="0 0 64 80">${pin(26, 76, rain)}</svg>`}); }
 function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
 /* the two grown-up kids trail behind mum along today's path, a fixed number of screen pixels back (like the sketch map) */
 let KIDS = null;
@@ -318,7 +318,7 @@ function drawLive(){
   }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
-  let ll = llAt(d, km), icon = iconPin(), drag = true, walking = true;
+  let ll = llAt(d, km), icon = iconPin(rainingNow(d)), drag = true, walking = true;
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
     ll = alongPoly([js.a, ...(js.via || []), js.b], f);
     icon = js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(); drag = js.kind !== "ride"; walking = false; }

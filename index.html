@@ -738,7 +738,22 @@ function rideIcon(x, y, mode){   // the vehicle, with the three squirrels peekin
       <circle cx="-15" cy="-4" r="3" fill="#3b2f2a"/><circle cx="15" cy="-4" r="3" fill="#3b2f2a"/>`;
   return `<g transform="translate(${x} ${y - 4}) scale(1.4)"><ellipse cx="0" cy="-2" rx="22" ry="3" fill="#000" opacity=".12"/>${body}</g>`;
 }
-function pin(x, y){
+/* a pink wagasa (paper umbrella) mum holds up when it's raining where she is */
+function umbrella(x, cy){
+  const ux = x + 7, top = cy - 40, L = ux - 22, R = ux + 22, rim = cy - 21;
+  return `<g>
+    <path d="M${ux+12} ${top+2} l2 6 M${L-4} ${rim+4} l2 6 M${R+4} ${rim+6} l2 6" stroke="#5b9bd5" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M${ux} ${rim-1} L${ux-3} ${cy+3}" stroke="#7a4a2a" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M${L} ${rim} Q${ux} ${top-4} ${R} ${rim} L${R} ${rim} ${[3,2,1,0].map(i => { const b = L + i*11, a = b + 11; return `Q${(a+b)/2} ${rim+4} ${b} ${rim}`; }).join(" ")} Z" fill="#f4a7b9" stroke="#c25b78" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M${ux} ${top+1} L${L+11} ${rim} M${ux} ${top+1} L${ux} ${rim} M${ux} ${top+1} L${R-11} ${rim}" stroke="#c25b78" stroke-width="1" opacity=".7"/>
+    <circle cx="${ux}" cy="${top+1}" r="2" fill="#c25b78"/>
+  </g>`;
+}
+/* is it raining (or snowing) where the squirrels are, at the time shown? (from the weather strip's forecast) */
+function rainingNow(d){ if (!S.wx) return false;
+  const w = WXC[wxKey(dayISO(d), whereAt(d, S.t))], h = Math.floor(S.t / 60);
+  return !!w && h >= 0 && h < 24 && (w.c[h] >= 51 || w.mm[h] >= 0.2); }
+function pin(x, y, rain){
   // round badge with a pointer whose tip sits exactly on the route point (x, y)
   const cy = y - 30;
   return `<g>
@@ -746,6 +761,7 @@ function pin(x, y){
     <path d="M${x-8} ${cy+12} L${x} ${y} L${x+8} ${cy+12} Z" fill="#e2553f"/>
     <circle cx="${x}" cy="${cy}" r="17" fill="#fffdf8" stroke="#e2553f" stroke-width="3"/>
     ${squirrel(x-2, cy+10, 0.62, "kasa")}
+    ${rain ? umbrella(x, cy) : ""}
   </g>`;
 }
 function render(){
@@ -881,7 +897,7 @@ function render(){
   else if (js || pre) g += `<g pointer-events="none">${squirrel(wx-30, wy+3, ks*0.97, "pack")}${squirrel(wx-16, wy+3, ks, "scarf")}</g><g id="walker" style="cursor:grab">${pin(wx, wy)}</g>`;
   else {
     g += `<g pointer-events="none">${squirrel(k1[0]-4, k1[1]+3, ks, "scarf")}${squirrel(k2[0]-4, k2[1]+3, ks*0.97, "pack")}</g>`;
-    g += `<g id="walker" style="cursor:grab">${pin(wx, wy)}</g>`;
+    g += `<g id="walker" style="cursor:grab">${pin(wx, wy, rainingNow(d))}</g>`;
   }
   if (S.txt === 0) g += LBL;
   svg.innerHTML = g;
@@ -924,7 +940,7 @@ function wxFetch(keys){
           WXC[ks[i]] = {at: Date.now(), c: h.weather_code, t: h.temperature_2m, p: h.precipitation_probability, mm: h.precipitation, day: h.is_day}; });
         WX_ERR = ""; landed();
         try { const keep = Object.entries(WXC).sort((a, b) => b[1].at - a[1].at).slice(0, 150); localStorage.setItem("nakasendo.wx", JSON.stringify(Object.fromEntries(keep))); } catch (e) {}
-        renderWx();
+        render();
       }).catch(e => { landed(); ks.forEach(k => WX_FAIL[k] = Date.now()); WX_ERR = navigator.onLine === false ? "offline" : String(e.message || e); renderWx(); });
     });
   }, 350);
@@ -1454,7 +1470,7 @@ function iconSquirrels(){
   return LF.divIcon({className: "sq-icon", iconSize: [96, 66], iconAnchor: [74, 62],
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
-function iconPin(){ return LF.divIcon({className: "sq-icon", iconSize: [48, 66], iconAnchor: [24, 62], html: `<svg width="48" height="66" viewBox="0 0 48 66">${pin(24, 62)}</svg>`}); }
+function iconPin(rain){ return LF.divIcon({className: "sq-icon", iconSize: [64, 80], iconAnchor: [26, 76], html: `<svg width="64" height="80" viewBox="0 0 64 80">${pin(26, 76, rain)}</svg>`}); }
 function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
 /* the two grown-up kids trail behind mum along today's path, a fixed number of screen pixels back (like the sketch map) */
 let KIDS = null;
@@ -1557,7 +1573,7 @@ function drawLive(){
   }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
-  let ll = llAt(d, km), icon = iconPin(), drag = true, walking = true;
+  let ll = llAt(d, km), icon = iconPin(rainingNow(d)), drag = true, walking = true;
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
     ll = alongPoly([js.a, ...(js.via || []), js.b], f);
     icon = js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(); drag = js.kind !== "ride"; walking = false; }
