@@ -24,5 +24,11 @@ async def main():
         await pg.click(".live-set"); await pg.wait_for_timeout(300)
         r = await pg.evaluate("() => [S.day, S.km.toFixed(2), fmt(S.t), S.pace, fmt(startOf(D())), document.getElementById('liveToast').textContent]")
         print(r, errs); await pg.screenshot(path=str(ROOT / "live_test.png"))
-        await b.close(); sys.exit(1 if errs or r[0] != "d4" else 0)
+        # drag the squirrels well off the trail: mid-drag they must still sit on it (within 30 m)
+        bb = await pg.locator(".leaflet-marker-icon.leaflet-marker-draggable").first.bounding_box()
+        x0, y0 = bb["x"] + 74, bb["y"] + 30
+        await pg.mouse.move(x0, y0); await pg.mouse.down(); await pg.mouse.move(x0 - 120, y0 + 60, steps=8)
+        off = await pg.evaluate("() => { let m; LLAYER.eachLayer(l => { if (l.dragging && l.dragging.enabled()) m = l; }); const p = m.getLatLng(); return snapAnyDay([p.lat, p.lng]).dist; }")
+        await pg.mouse.up(); print("mid-drag distance from trail (m):", round(off, 1))
+        await b.close(); sys.exit(1 if errs or r[0] != "d4" or off > 30 else 0)
 asyncio.run(main())

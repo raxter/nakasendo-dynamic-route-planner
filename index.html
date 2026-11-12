@@ -1173,9 +1173,9 @@ function quietDraw(ctx, Ls, px, r, c, layer, labels, byTile, live){
     if (p.annoCtg !== 210 && p.annoCtg !== 220 || !ls[0]?.[0]) return;   // 210/220 = village and hamlet names
     const [x, y] = ls[0][0], lon = (c.x + x/ext) / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (c.y + y/ext) / n))) * 180 / Math.PI;
     if (!nearTrail([lat, lon], 1200)) return;
-    const id = `${p.knj}@${lat.toFixed(3)},${lon.toFixed(3)}`; ids.push(id);
+    const id = `${String(p.knj).replace(/^大?字/, "")}@${lat.toFixed(3)},${lon.toFixed(3)}`; ids.push(id);
     if (live.has(id)) { live.get(id).n++; return; }
-    const ro = romaji(p.kana), html = `<span class="qlab">${esc(ro || p.knj)}${ro ? ` <small>${esc(p.knj)}</small>` : ""}</span>`;
+    const knj = String(p.knj || "").replace(/^大?字/, ""), ro = romaji(String(p.kana || "").replace(/^(おお)?あざ/, "")), html = `<span class="qlab">${esc(ro || knj)}${ro ? ` <small>${esc(knj)}</small>` : ""}</span>`;
     const m = LF.marker([lat, lon], {icon: LF.divIcon({className: "qlab-icon", html, iconSize: [0, 0]}), pane: "qlabels", interactive: false, keyboard: false});
     live.set(id, {m, n: 1}); labels.addLayer(m);
   });
@@ -1315,6 +1315,23 @@ function drawLive(){
       .bindTooltip(tip, {permanent: S.txt !== 1 && (isF || isB || p.kind === "end"), direction: "right", className: "live-tip" + (isF ? " f" : isB ? " b" : "") + (S.txt === 2 ? " faded" : "")});
     if (p.hop?.at) LF.polyline([p.ll, p.hop.at], {color: col, weight: 2, dashArray: "2 5"}).addTo(LLAYER);
   });
+  // the bus/train you'd catch: dashed line through the stops it passes, a dot where you'd get off, grey if the same train runs on
+  const tourLeg = o => TOUR.some(t => t.day === selKey && near(t.a, o.p.hop.at || o.p.ll) && near(t.b, o.p.hop.toLL));
+  const rideLine = (o, side, col) => { if (tourLeg(o)) return; const h = o.p.hop, a = h.at || o.p.ll, b = h.toLL;
+    let pts = [a, ...(h.via || []), b];
+    if (pts.length === 2){ const k = Math.cos(a[0]*Math.PI/180), vx = (b[1]-a[1])*k, vy = b[0]-a[0], off = .12*side;   // a gentle bow, to one side
+      pts = [a, [(a[0]+b[0])/2 + vx*off, (a[1]+b[1])/2 - vy*off/k], b]; }
+    const line = smoothThrough(pts);
+    LF.polyline(line, {color: "#fffdf8", weight: 7, opacity: .9, interactive: false}).addTo(LLAYER);
+    LF.polyline(line, {color: col, weight: 4, dashArray: "9 6", interactive: false}).addTo(LLAYER);
+    (h.via || []).forEach(v => LF.circleMarker(v, {radius: 4, color: col, weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false}).addTo(LLAYER));
+    const end = LF.circleMarker(b, {radius: 6, color: "#fff", weight: 2, fillColor: col, fillOpacity: 1}).addTo(LLAYER);
+    if (o.dep != null && h.ride) end.bindTooltip(`${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${esc(h.to)} ~${fmt(o.dep + h.ride)}`, {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (side > 0 ? " f" : " b") + (S.txt === 2 ? " faded" : "")});
+    if (h.on?.length){ LF.polyline([b, ...h.on.map(n => n.ll)], {color: "#6f6259", weight: 1.5, opacity: .85, interactive: false}).addTo(LLAYER);
+      const last = h.on.at(-1); LF.circleMarker(last.ll, {radius: 3, color: "#6f6259", weight: 1, fillColor: "#6f6259", fillOpacity: 1}).addTo(LLAYER)
+        .bindTooltip(`same ${h.mode.split(" ")[0]} on to ${esc(last.name)}${h.est ? " ≈" : ""}`, {direction: "right"}); } };
+  if (opt && fwd && !fwd.noBus) rideLine(fwd, 1, "#2e8b3e");
+  if (opt && back && !back.off && (!fwd || back.p !== fwd.p)) rideLine(back, -1, "#e08a12");
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
   let ll = llAt(d, km), icon = iconSquirrels(), drag = true;
@@ -1323,10 +1340,13 @@ function drawLive(){
     if (js.kind === "ride"){ icon = iconRide(js.mode); drag = false; } }
   else if (pre) ll = journeyOf(d)[0].a;
   const m = LF.marker(ll, {icon, draggable: drag, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);
+  // dragging keeps the squirrels on the trail all the way (like the sketch map): snap on every move
+  const snapDrag = p => { const s = snapAnyDay([p.lat, p.lng]);
+    if (s.day !== S.day){ S.day = s.day; $("courseBox").hidden = S.day !== "d4"; drawChips(); }
+    setFromPos(s.km); sync(); render(); return llAt(D(), S.km); };
   m.on("dragstart", () => LDRAG = true);
-  m.on("dragend", e => { LDRAG = false; const p = e.target.getLatLng(), s = snapAnyDay([p.lat, p.lng]);
-    if (s.day !== S.day){ const from = ORDER.indexOf(S.day); S.day = s.day; $("courseBox").hidden = S.day !== "d4"; drawChips(); }
-    setFromPos(s.km); sync(); render(); });
+  m.on("drag", e => m.setLatLng(snapDrag(e.target.getLatLng())));
+  m.on("dragend", e => { snapDrag(e.target.getLatLng()); LDRAG = false; render(); });
   // you: the blue dot
   if (GEO){
     LF.circle(GEO.ll, {radius: GEO.acc, color: "#1a73e8", weight: 1, fillColor: "#1a73e8", fillOpacity: .12, interactive: false}).addTo(LLAYER);
