@@ -93,7 +93,7 @@
   .legend{position:absolute;left:8px;bottom:8px;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
   .sw{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
   .stn{display:inline-block;width:10px;height:10px;border:2px solid var(--ai);border-radius:3px;background:#fff;vertical-align:middle;margin-right:4px}
-  .sw.walk{border-color:var(--ahead)} .sw.hop{border-top-style:dashed;border-color:var(--ahead)} .sw.pre{border-top-style:dotted;border-color:var(--ai)} .sw.back{border-top-style:dashed;border-color:var(--back)} .sw.done{border-color:#b7cfb3}
+  .sw.walk{border-color:var(--ahead)} .sw.hop{border-top-style:dashed;border-color:var(--ahead)} .sw.pre{border-top-style:dotted;border-color:var(--ai)} .sw.back{border-top-style:dashed;border-color:var(--back)} .sw.done{border-color:#b7cfb3} .sw.same{border-top-width:1.5px;border-color:#6f6259}
 
   .panel{display:flex;flex-direction:column;gap:6px;min-height:0}
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -167,7 +167,7 @@
       <div class="fine">The daylight band shades the walk by the light when you'd be there: pale by day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark. Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
-      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="sw same"></i>same train runs on</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgSky"><i class="sw sky"></i>light → dark</span><span id="lgOsm">trail © OpenStreetMap</span>
     </div>
     <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
     <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
@@ -283,7 +283,8 @@ const DAYS = {
       ]},
   d6:{chip:"Day 6", date:"Wed 18 Nov", title:"Yabuhara → Torii Pass → Narai", walkStart:hm("7:00"), lunchKm:null, before:"the tour vehicle and train to Yabuhara", transfer:{kind:"vehicle+train", mins:45, trains:"KF", ride:20},
       pts:[
-        pt(0, P.yabuhara, "Yabuhara Stn", "stop", 0,0, {mode:"🚃 JR train", to:"Narai", toLL:P.narai, ride:6, deps:DEP.yabuharaTrain, est:true, freqNote:"every 1–2 h (≈)"}),
+        pt(0, P.yabuhara, "Yabuhara Stn", "stop", 0,0, {mode:"🚃 JR train", to:"Narai", toLL:P.narai, ride:6, deps:DEP.yabuharaTrain, est:true, freqNote:"every 1–2 h (≈)",
+          on:[{name:"Shiojiri", ll:P.shiojiri}]}),   // on = further stops of tonight's journey the same train runs on to (no change needed)
         pt(4, P.torii, "≈ Torii Pass", "pass", 300,20),
         pt(9, P.narai, "Narai Stn", "end", 50,330, {mode:"🚃 JR train", to:"Shiojiri", toLL:P.shiojiri, ride:20, deps:DEP.naraiTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
@@ -707,6 +708,9 @@ function render(){
       + `<path d="${arcPath(from, to, side)}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" marker-end="url(#${marker})"/>`
       + `<circle cx="${to[0]}" cy="${to[1]}" r="6" fill="${color}" stroke="#fff" stroke-width="2"/>`;
     if (o.dep != null && h.ride) addLabel(to[0], to[1], `${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${h.to} ~${fmt(o.dep + h.ride)}`, side > 0 ? "#2e8b3e" : "#c0700a", {pri:2, boxed:true, time:o.dep + h.ride});
+    if (h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
+      let a = to; h.on.forEach(n => { const b = scr(n.ll); out += `<path d="${bow(a, b).d}" stroke="#6f6259" stroke-width="1.5" stroke-opacity=".85" stroke-linecap="round" fill="none"/><circle cx="${b[0]}" cy="${b[1]}" r="3" fill="#6f6259"/>`; a = b; });
+      addLabel(a[0], a[1], `same ${h.mode.split(" ")[0]} on to ${h.on.at(-1).name}${h.est ? " ≈" : ""}`, "#6f6259", {pri:1, size:10}); }
     return out; };
   if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
   if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
@@ -785,7 +789,7 @@ function optHTML(isF, o, f){
     <div><b>${esc(name)}</b>${here ? "" : ` · ${o.dist.toFixed(1)} km · ${dur(o.walk)}`} → arrive ${fmt(o.arr)}</div>
     <div class="big">${icon} ${ic} ${o.dep!=null ? `${fmt(o.dep)} · ${waits(o)}` : "none left today"}</div>
     <div>${o.dep!=null && h.ride ? `<span class="pill ${isF ? "f" : "b"}">${isF ? "➡️" : "↩️"} ${ic} at ${esc(h.to)} ~${fmt(o.dep + h.ride)}</span> ` : ""}${then}</div>
-    <div class="fine">${esc(h.mode)} → ${esc(h.to)} · ${esc(h.freqNote)}${h.est ? " · ≈ estimate" : ""} · ${q.txt}</div>`;
+    <div class="fine">${esc(h.mode)} → ${esc(h.to)}${h.on?.length ? ` → ${h.on.map(n => esc(n.name)).join(" → ")} (same train, no change)` : ""} · ${esc(h.freqNote)}${h.est ? " · ≈ estimate" : ""} · ${q.txt}</div>`;
 }
 const TMIN = 360, TMAX = 1200, pctOf = m => Math.min(Math.max((m - TMIN)/(TMAX - TMIN), 0), 1)*100;
 function renderRail(){
