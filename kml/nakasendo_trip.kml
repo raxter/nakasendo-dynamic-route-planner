@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Nakasendo Trip – 6 Nights</name>
+
+    <Placemark>
+      <name>Day 1 (arrive Ena) – Ena Ichikawa Inn</name>
+      <description>Night 1. Day 2 walk starts here.&lt;br&gt;Tel: 0573-25-2191&lt;br&gt;95-1 Ōichō, Ena, Gifu 509-7201&lt;br&gt;Facilities: Internet</description>
+      <Point><coordinates>137.4123158,35.454506,0</coordinates></Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Day 2 (Ena → Magome) – Guest House Motomiya</name>
+      <description>End of Day 2 walk. Day 3 starts here.&lt;br&gt;Tel: 0573-69-2158&lt;br&gt;4944-2 Magome, Nakatsugawa, Gifu 508-0502&lt;br&gt;Facilities: Internet</description>
+      <Point><coordinates>137.5609182,35.5202838,0</coordinates></Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Day 3 (Magome → O-Tsumago) – Maruya Inn</name>
+      <description>End of Day 3 walk. Day 4 starts here.&lt;br&gt;Tel: 0264-57-3117&lt;br&gt;1477 Otsumago, Nagiso, Kiso District, Nagano 399-5302&lt;br&gt;Facilities: Internet</description>
+      <Point><coordinates>137.5923279,35.5639122,0</coordinates></Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Day 4 (O-Tsumago → Kiso-Fukushima) – Iwaya Inn</name>
+      <description>End of Day 4 walk. Day 5 starts here.&lt;br&gt;Tel: 0264-22-2015&lt;br&gt;5169 Fukushima, Kiso-machi, Kiso-gun, Nagano 397-0001&lt;br&gt;Facilities: Internet, Toilet, Shower</description>
+      <Point><coordinates>137.6973101,35.850491,0</coordinates></Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Day 5 (Kiso-Fukushima → Kaida Plateau) – Yamakanoyu</name>
+      <description>End of Day 5 walk. Day 6 starts here.&lt;br&gt;Tel: 0264-44-2010&lt;br&gt;3109-1 Kaidakogen Nishino, Kiso, Kiso District, Nagano 397-0302&lt;br&gt;Facilities: Internet, Toilet</description>
+      <Point><coordinates>137.5841498,35.9584302,0</coordinates></Point>
+    </Placemark>
+
+    <Placemark>
+      <name>Day 6 (Kaida → Narai → Karuizawa) – Le Grand Kyu Karuizawa</name>
+      <description>End of Day 6. No luggage tonight. Day 7 walk starts here.&lt;br&gt;Tel: 0267-41-2030&lt;br&gt;469-4 Oaza Karuizawa, Karuizawa-machi, Kitasaku-gun, Nagano 389-0102&lt;br&gt;Facilities: Internet, Toilet, Shower</description>
+      <Point><coordinates>138.6345646,36.3528081,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Day 7 (Karuizawa → Yokokawa) – end at Yokokawa Station</name>
+      <description>End of Day 7 walk. Train to Tokyo from here.</description>
+      <Point><coordinates>138.737046,36.3363317,0</coordinates></Point>
+    </Placemark>
+  </Document>
+</kml>

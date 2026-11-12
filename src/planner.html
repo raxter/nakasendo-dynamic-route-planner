@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Nakasendo Dynamic Route Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf6ec; --card:#fffdf8; --ink:#3b2f2a; --quiet:#8a7a6e; --line:#ecdfcc;
+    --matcha:#5a9a5b; --matcha-soft:#e4f1df; --shu:#e2553f; --shu-soft:#fde6df; --ahead:#2e8b3e; --ahead-soft:#e2f2df; --back:#e08a12; --back-soft:#fff0d6;
+    --ai:#3d5a99; --ai-soft:#e3e9f6; --sakura:#f4a7b9; --sakura-soft:#fdeef2; --gold:#e5a83a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{color:var(--ink);font:14px/1.4 "M PLUS Rounded 1c",-apple-system,"Hiragino Maru Gothic ProN",system-ui,sans-serif;background:var(--paper)}
+  /* tablets / laptops / square screens: one screen, no page scroll */
+  .app{height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;gap:6px;padding:6px 8px 8px}
+  .panel{height:clamp(130px,20dvh,185px);overflow:auto}
+  @media (min-aspect-ratio: 5/4) and (min-width:700px){ .panel{height:clamp(120px,22dvh,190px)} .opts{grid-template-columns:1fr 1fr} }
+  #tlInline{display:none}
+  /* phones: map first, details below (scrolling allowed) */
+  @media (max-width:599px){
+    html,body{overflow:auto;height:auto}
+    .app{height:auto;display:block;padding:0 6px 16px}
+    .top{padding-top:6px}
+    .controls{position:sticky;top:0;z-index:10;margin:6px 0;box-shadow:0 3px 0 var(--paper)}
+    .mapwrap{height:68svh;margin-bottom:6px}
+    .panel{height:auto;overflow:visible}
+    .opts{grid-template-columns:1fr !important}
+    #tlInline{display:block;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:8px 10px}
+    #tlBtn{display:none}
+    .top{flex-wrap:wrap;gap:4px 8px}
+    .top h1{font-size:14px}
+    .chipbar{flex:0 0 100% !important}
+    .chip{padding:3px 8px;font-size:12.5px}
+    .chip small{display:none}
+    .hereat{max-width:100px;font-size:11px;padding:0 4px}
+    .ctl label{white-space:nowrap}
+    .pn{display:none}
+  }
+  .top{display:flex;align-items:center;gap:8px;min-width:0}
+  .top h1{margin:0;font-size:15px;font-weight:800;white-space:nowrap}
+  .top .logo{font-size:20px}
+  .chipbar{flex:1;min-width:0;display:flex;align-items:center;gap:2px;position:relative}
+  .chips{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+  .chips.ovl{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent)}
+  .chev{appearance:none;border:2px solid var(--line);background:#fff;border-radius:999px;width:26px;height:26px;font:inherit;font-size:14px;line-height:1;color:var(--ink);cursor:pointer;flex:0 0 auto;padding:0}
+  .chev[hidden]{display:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{appearance:none;border:2px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .chip[aria-pressed="true"]{background:var(--sakura-soft);border-color:var(--sakura);font-weight:800}
+  .chip small{color:var(--quiet);font-weight:400}
+  .iconbtn{appearance:none;border:2px solid var(--line);background:#fff;border-radius:999px;width:32px;height:32px;font-size:15px;cursor:pointer;flex:none}
+
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:4px 10px}
+  .ctl label{display:flex;justify-content:space-between;gap:6px;font-weight:700;font-size:12.5px}
+  .hereat{margin-left:auto;margin-right:4px;max-width:150px;font:inherit;font-size:11.5px;font-weight:800;color:var(--ink);background:var(--sakura-soft);border:2px solid var(--sakura);border-radius:999px;padding:1px 6px;cursor:pointer}
+  .ctl .val{color:var(--shu);font-weight:800}
+  input[type=range]{width:100%;accent-color:var(--shu);height:22px;margin:0}
+  .rail{position:relative;height:22px;margin:0 8px}
+  .rail .leaders{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .tick{position:absolute;top:0;width:2px;height:6px;margin-left:-1px;border-radius:1px;background:var(--ink)}
+  .tick.t-start{background:none;width:0;height:0;margin-left:-5px;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid var(--ai);border-radius:0}
+  .tick.t-sun{background:#e08a12} .tick.t-dark{background:#3d5a99}
+  .mk{position:absolute;top:8px;transform:translateX(-50%);font-size:11px;line-height:1;white-space:nowrap;display:flex;align-items:center;gap:2px;color:var(--quiet)}
+  .mk b{font-size:10.5px;font-weight:700}
+  .mk.start{color:var(--ai);font-size:12px;cursor:ew-resize;touch-action:none;padding:0 6px;border-radius:8px;user-select:none}
+  .mk.start:hover{background:var(--ai-soft)}
+  .ctl:last-child .rail{display:none}
+  .course{display:flex;align-items:center;gap:6px;font-size:12.5px}
+  .course[hidden]{display:none}
+  .toggle{display:inline-flex;border:2px solid var(--line);border-radius:999px;padding:2px;background:#fff}
+  .toggle button{appearance:none;border:0;background:transparent;font:inherit;font-size:12.5px;padding:2px 10px;border-radius:999px;cursor:pointer;color:var(--quiet)}
+  .toggle button[aria-pressed="true"]{background:var(--ai-soft);color:var(--ai);font-weight:800}
+
+  .mapwrap{position:relative;min-height:0;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:var(--paper)}
+  #map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+  .status{grid-column:1 / span 2;display:flex;flex-wrap:nowrap;align-items:center;gap:6px;border-top:1px dashed var(--line);padding-top:4px;height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}
+  .status::-webkit-scrollbar{display:none}
+  .status .badges{flex-wrap:nowrap}
+  .status .course{flex:none}
+  .where{font-size:13px}
+  .badges{display:flex;flex-wrap:wrap;gap:4px}
+  .badge{font-size:11.5px;padding:1px 8px;border-radius:999px;background:rgba(253,238,242,.95);border:1.5px solid var(--sakura)}
+  .badge.warn{background:rgba(255,243,220,.95);border-color:var(--gold)}
+  .badge.bad{background:rgba(253,230,223,.95);border-color:var(--shu)}
+  .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:5px}
+  .zoom button{appearance:none;width:36px;height:36px;border-radius:12px;border:2px solid var(--line);background:rgba(255,253,248,.95);font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink)}
+  .sw.zgo,.sw.zback,.sw.zcommit{border-top:0;height:8px;border-radius:4px}.sw.zgo{background:rgba(90,154,91,.45)}.sw.zback{background:rgba(233,195,44,.75)}.sw.zcommit{background:rgba(228,87,46,.7)}.sw.znobus{border-top:0;height:8px;border-radius:4px;background:rgba(142,27,58,.7)}
+  .legend{position:absolute;left:8px;bottom:8px;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
+  .sw{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
+  .stn{display:inline-block;width:10px;height:10px;border:2px solid var(--ai);border-radius:3px;background:#fff;vertical-align:middle;margin-right:4px}
+  .sw.walk{border-color:var(--ahead)} .sw.hop{border-top-style:dashed;border-color:var(--ahead)} .sw.pre{border-top-style:dotted;border-color:var(--ai)} .sw.back{border-top-style:dashed;border-color:var(--back)} .sw.done{border-color:#b7cfb3}
+
+  .panel{display:flex;flex-direction:column;gap:6px;min-height:0}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .opt{border-radius:14px;padding:6px 9px;border:2px solid;font-size:12.5px;min-width:0}
+  .opt.fwd{background:var(--ahead-soft);border-color:#9fd09b}
+  .opt.back{background:var(--back-soft);border-color:#f2c57a}
+  .opt.off{opacity:.55;filter:grayscale(.6)}
+  .opt > *{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .opt{min-height:112px}
+  .opt h3{margin:0;font-size:13px;font-weight:800}
+  .opt .big{font-size:16px;font-weight:800;line-height:1.25}
+  .opt .fine{font-size:11.5px;color:var(--quiet)}
+  .pill{display:inline-block;border:1.5px solid;border-radius:999px;padding:0 7px;font-weight:700;font-size:12px;background:#fffdf8;line-height:1.35}
+  .pill.f{color:#2e8b3e;border-color:#2e8b3e}
+  .pill.b{color:#c0700a;border-color:#e08a12}
+  .opt b{font-weight:800}
+  .tipbar{display:flex;gap:6px;align-items:center;font-size:12.5px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:4px 9px}
+  .tipbar .face{font-size:18px}
+  #tip{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tipbar .btns{margin-left:auto;display:flex;gap:4px;flex:none}
+  .sheet{position:absolute;inset:8px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;overflow:auto;z-index:5;font-size:13px}
+  .sheet h2{margin:0 0 6px;font-size:15px}
+  .sheet .close{position:absolute;right:8px;top:8px}
+  .tl{list-style:none;margin:0;padding:0}
+  .tl li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:4px 0;border-top:1px dashed var(--line)}
+  .tl .t{font-weight:800;color:var(--ai)} .tl .past{opacity:.45} .tl .here{background:var(--sakura-soft);border-radius:8px}
+  .fine{font-size:12px;color:var(--quiet)}
+  .hintpop{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:11.5px;padding:2px 8px;border-radius:999px;transform:translate(-50%,-150%);white-space:nowrap;transition:opacity .4s}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="logo">🐿️</span><h1>Nakasendo Dynamic Route Planner</h1>
+    <div class="chipbar"><button class="chev" id="chL" aria-label="Earlier days" hidden>‹</button><div class="chips" id="days"></div><button class="chev" id="chR" aria-label="Later days" hidden>›</button></div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl"><label for="time">🕖 Time <select id="hereAt" class="hereat" aria-label="Set the time you are at this point"></select><span class="val" id="timeV"></span></label><input type="range" id="time" min="360" max="1200" step="1"><div class="rail" id="rail"><svg class="leaders" id="leaders"></svg><i class="tick t-start" id="tkStart"></i><i class="tick t-end" id="tkEnd"></i><i class="tick t-sun" id="tkSun"></i><i class="tick t-dark" id="tkDark"></i><span class="mk start" id="mkStart" title="Drag to change when you leave the inn"><b id="mkStartT"></b></span><span class="mk" id="mkEnd">🏁<b id="mkEndT"></b></span><span class="mk" id="mkSun">🌇<b id="mkSunT"></b></span><span class="mk" id="mkDark">🌙<b id="mkDarkT"></b></span></div></div>
+    <div class="ctl"><label for="pace">🐢 Pace <span class="val" id="paceV"></span></label><input type="range" id="pace" min="12" max="45" step="1" value="30"><div style="height:22px"></div></div>
+    <div class="status"><div class="course" id="courseBox" hidden>
+      <div class="toggle" role="group" aria-label="Day 4 course">
+        <button type="button" data-c="B" aria-pressed="true">Course B · 8 km</button>
+        <button type="button" data-c="A" aria-pressed="false">Course A · 23 km</button>
+      </div>
+    </div><span class="where" id="where"></span><span class="badges" id="badges"></span></div>
+
+  </div>
+
+  <div class="mapwrap" id="mapwrap">
+    <svg id="map" role="img" aria-label="Zoomable sketch map of the whole Nakasendo trip"></svg>
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="Zoom in">＋</button>
+      <button type="button" id="zout" aria-label="Zoom out">－</button>
+      <button type="button" id="zday" aria-label="Fit today's walk" title="Fit today">📍</button>
+      <button type="button" id="ztrip" aria-label="Show whole trip" title="Whole trip">🗾</button>
+      <button type="button" id="ztxt" aria-label="Map text: shown" title="Map text: shown → hidden → faded">👁️</button>
+      <button type="button" id="zsize" aria-label="Map text size: full" title="Map text size: 100% / 50%" style="font-weight:800">Aa</button>
+    </div>
+    <div class="legend" id="legend">
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span>
+    </div>
+    <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
+    <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
+    <div class="sheet" id="infoSheet" hidden><button class="iconbtn close" data-close="infoSheet" aria-label="Close">✕</button>
+      <h2>How this works</h2>
+      <p><b>Sliders:</b> time and pace are at the top. Drag the squirrel pin along the walking route to set your position. Drag it onto another day's route and it switches to that day. Pace only changes when you move it. Moving time moves the squirrels, and dragging the squirrels changes the time. Changing pace keeps the squirrels where they are and recalculates the time.</p>
+      <p><b>Start time:</b> drag the ▲ under the time bar to change when you leave the inn. On Day 5 the tour taxi leaves then (≈25 min to the falls). On Day 6 the tour vehicle leaves then (≈45 min to Kiso-Fukushima Station), and you catch the next train to Yabuhara. Walk Japan doesn't publish these times: it only says the transfer is after breakfast, so the durations are my estimates. The 🏁 on the bar is your expected finish, 🌇 is sunset and 🌙 is dark.</p>
+      <p><b>Walking model:</b> your pace is in flat-ground minutes per km, including short rests. Climbs add 15 min per 100 m going up, and walking back over a descent counts as a climb. Long days include a 45-min lunch.</p>
+      <p><b>Light:</b> 🌇 is sunset (about 16:34–16:42, depending on the day and place) and 🌙 is when it gets dark, at the end of civil twilight about 27 minutes later. In deep valleys and forest it gets dim earlier than that.</p>
+      <p><b>The map is a sketch:</b> lines join known points in straight lines, and points marked ≈ are approximate. It's not a GPS track, so on the ground follow your Walk Japan booklet.</p>
+      <p><b>Timetables:</b> japan-guide.com (Kiso buses, 2026), Go Nagano, NAVITIME (Kaida bus, Usui line bus), Ekispert (Nagiso trains), JR East (Yokokawa) and the Karuizawa Aka Bus 2026 timetable. Times marked ≈ are my estimates from neighbouring stops, so check them at the station or ask your inn. Distances come from the Walk Japan itinerary.</p>
+      <p><b>Safety:</b> taxis are a last resort, so ask your inn to call one. Bear bells on in the forest, and never split up mid-pass. Emergency: 119 (ambulance) / 110 (police).</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="opts"><div class="opt fwd" id="fwd"></div><div class="opt back" id="back"></div></div>
+    <div class="tipbar"><span class="face">🐿️</span><span id="tip"></span>
+      <span class="btns"><button class="iconbtn" id="tlBtn" aria-label="Today's timetable" title="Today's timetable">📋</button><button class="iconbtn" id="infoBtn" aria-label="How this works and sources" title="How this works">ℹ️</button></span></div>
+    <section id="tlInline"><b id="tlTitle2"></b><ul class="tl" id="tl2"></ul></section>
+  </div>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+const hm = s => { const [h,m] = s.split(":").map(Number); return h*60+m; };
+const fmt = m => { m = Math.round(m); const nx = m >= 1440; if (nx) m -= 1440; const h = Math.floor(m/60), mm = ((m%60)+60)%60; return `${h}:${String(mm).padStart(2,"0")}${nx ? " (after midnight)" : ""}`; };
+const dur = m => { m = Math.round(m); if (m < 60) return `${m} min`; const h = Math.floor(m/60), r = m%60; return r ? `${h} h ${r} min` : `${h} h`; };
+const L = s => s.split(" ").map(hm);
+const every = (from, to, step) => { const a=[]; for(let t=hm(from); t<=hm(to); t+=step) a.push(t); return a; };
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const SUNSET = hm("16:40"), LUNCH = 45, TWILIGHT = 27;
+const SUN_BY_DAY = {d2:"16:42", d3:"16:41", d4:"16:40", d5:"16:39", d6:"16:38", d7:"16:34"};
+const sunsetOf = d => hm(SUN_BY_DAY[d.key] || "16:40"), darkOf = d => sunsetOf(d) + TWILIGHT;
+
+/* ---------- places ---------- */
+const P = {
+  ena:[35.4551,137.4082], nakatsu:[35.5005,137.5031], ochiai:[35.5117,137.5312], ishi:[35.5144,137.5487],
+  magome:[35.5249,137.5649], motomiya:[35.5203,137.5609], magomeToge:[35.5391,137.5846], odaki:[35.5546,137.5889], otsumago:[35.5647,137.5930],
+  tsumago:[35.5790,137.5950], nagiso:[35.5988,137.6084], nenoue:[35.6380,137.6000], nojiri:[35.6730,137.6362], kisoF:[35.8440,137.6933],
+  iwaya:[35.8505,137.6973], karasawa:[35.9131,137.6498], jizo:[35.9270,137.6380], kaidaInfo:[35.9380,137.6317], kaidaShisho:[35.9407,137.6003],
+  nishino:[35.9520,137.5960], yamaka:[35.9584,137.5841], yabuhara:[35.9302,137.7845], torii:[35.9480,137.7970], narai:[35.9691,137.8156],
+  shiojiri:[36.1150,137.9540], nagano:[36.6432,138.1886], karuizawaStn:[36.3426,138.6353], grandKyu:[36.3528,138.6346],
+  kumano:[36.3698,138.6562], kyuKaru:[36.3570,138.6360], sakamoto:[36.3400,138.7150], yokokawa:[36.3363,138.7370], takasaki:[36.3220,139.0128]
+};
+
+/* ---------- departures ---------- */
+const DEP = {
+  enaTrain: every("6:00","21:30",30),
+  nakatsuBusSat: L("8:15 9:10 9:55 10:45 11:15 12:15 13:15 14:15 15:15 16:15 17:45"),
+  ochiaiBusSat: L("8:27 9:22 10:07 10:57 11:27 12:27 13:27 14:27 15:27 16:27 17:57"),
+  magomeBus: L("10:55 13:25 15:00 17:15"), togeBus: L("11:06 13:36 15:11 17:26"), odaruBus: L("11:11 13:41 15:16 17:31"),
+  otsumagoBus: L("11:16 13:46 15:21 17:36"),
+  tsumagoBus: L("7:39 9:44 9:50 10:40 11:21 11:44 11:50 13:00 13:24 13:50 15:26 15:40 16:10 16:14 17:41"),
+  nagisoTrain: L("6:22 7:02 8:00 8:11 10:19 11:00 12:19 14:34 16:00 17:16 18:16 20:19 20:43 21:49"),
+  nojiriTrain: L("6:35 7:15 8:24 10:32 12:32 14:47 17:29 18:29 20:32 22:02"),
+  kaidaInfoBus: L("8:30 10:11 11:16 12:28 13:16 14:23 15:24 16:45 17:48 18:51 20:16"),
+  kaidaShishoBus: L("8:36 10:17 11:22 12:34 13:22 14:29 15:30 16:51 17:54 18:57 20:22"),
+  yabuharaTrain: L("7:32 8:12 9:21 11:29 13:29 15:44 18:26 19:26 21:29"),
+  naraiTrain: L("7:38 8:18 9:27 11:35 13:35 15:50 18:32 19:32 21:35"),
+  usuiBus: L("6:59 9:20 11:05 12:55 14:20 15:35 16:30 18:05"),
+  akaBusDown: L("10:10 11:00 11:45 12:45 14:00"),
+  yokokawaTrain: L("5:18 6:10 6:43 7:10 7:36 8:10 8:43 9:28 10:10 11:10 12:04 13:04 14:10 15:10 16:00 16:30 17:21 18:13 18:50 19:32 20:19 21:42")
+};
+
+/* ---------- days ---------- */
+const pt = (km, ll, name, kind, up=0, down=0, hop=null) => ({km, ll, name, kind, up, down, hop});
+const DAYS = {
+  d2:{chip:"Day 2", date:"Sat 14 Nov", title:"Ena → Nakatsugawa → Magome", walkStart:hm("7:00"), lunchKm:12,
+      pts:[
+        pt(0, P.ena, "Ena", "stop", 0,0, {mode:"🚃 train", to:"Nakatsugawa", toLL:P.nakatsu, ride:10, deps:DEP.enaTrain, est:true, freqNote:"≈ every 30 min (estimate)"}),
+        pt(12, P.nakatsu, "Nakatsugawa Stn", "stop", 150,120, {mode:"🚌 Kitaena bus", to:"Magome", toLL:P.magome, ride:25, deps:DEP.nakatsuBusSat, freqNote:"hourly (Sat)"}),
+        pt(15, P.ochiai, "Ochiai-juku", "stop", 60,20, {mode:"🚌 bus (Ochiai stop)", to:"Magome", toLL:P.magome, ride:13, deps:DEP.ochiaiBusSat, est:true, freqNote:"hourly (≈ times)"}),
+        pt(16.3, P.ishi, "Stone-paved path", "pass", 80,0),
+        pt(18, P.magome, "Magome", "end", 150,10)
+      ]},
+  d3:{chip:"Day 3", date:"Sun 15 Nov", title:"Magome → O-Tsumago", walkStart:hm("7:00"), lunchKm:null,
+      pts:[
+        pt(0, P.magome, "Magome bus stop", "stop", 0,0, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:21, deps:DEP.magomeBus, freqNote:"4 a day"}),
+        pt(3, P.magomeToge, "Magome Pass", "stop", 230,20, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:10, deps:DEP.togeBus, freqNote:"4 a day"}),
+        pt(5.5, P.odaki, "Odaki/Medaki Falls", "stop", 10,230, {mode:"🚌 Ontake bus", to:"Otsumago", toLL:P.otsumago, ride:5, deps:DEP.odaruBus, freqNote:"4 a day"}),
+        pt(6.5, P.otsumago, "Otsumago", "end", 20,60)
+      ]},
+  d4B:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nagiso (Course B)", walkStart:hm("7:00"), lunchKm:null,
+      pts:[
+        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day"}),
+        pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
+        pt(8, P.nagiso, "Nagiso Stn", "end", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h"})
+      ]},
+  d4A:{chip:"Day 4", date:"Mon 16 Nov", title:"O-Tsumago → Nenoue Pass → Nojiri (Course A)", walkStart:hm("7:00"), lunchKm:14,
+      pts:[
+        pt(0, P.otsumago, "Otsumago bus stop", "stop", 0,0, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:14, deps:DEP.otsumagoBus, freqNote:"4 a day"}),
+        pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
+        pt(8, P.nagiso, "Nagiso Stn (last exit)", "stop", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h"}),
+        pt(14, P.nenoue, "≈ Nenoue Pass", "pass", 550,50),
+        pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:40, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
+      ]},
+  d5:{chip:"Day 5", date:"Tue 17 Nov", title:"Karasawa Falls → Kaida Plateau", walkStart:hm("7:00"), lunchKm:6, before:"the tour taxi to Karasawa Falls", transfer:{kind:"taxi", mins:25},
+      pts:[
+        pt(0, P.karasawa, "Karasawa Falls", "stop", 0,0),
+        pt(3.5, P.jizo, "≈ Jizo Pass", "pass", 400,0),
+        pt(6, P.kaidaInfo, "Kaida Info Centre", "stop", 0,200, {mode:"🚌 Kaida bus", to:"Yamakanoyu", toLL:P.yamaka, ride:22, deps:DEP.kaidaInfoBus, est:true, freqNote:"roughly hourly (≈ times)"}),
+        pt(9, P.kaidaShisho, "Kaida Shisho", "stop", 30,30, {mode:"🚌 Kaida bus", to:"Yamakanoyu", toLL:P.yamaka, ride:16, deps:DEP.kaidaShishoBus, freqNote:"roughly hourly"}),
+        pt(11, P.nishino, "≈ Nishino Pass", "pass", 200,0),
+        pt(13, P.yamaka, "Yamakanoyu", "end", 10,150)
+      ]},
+  d6:{chip:"Day 6", date:"Wed 18 Nov", title:"Yabuhara → Torii Pass → Narai", walkStart:hm("7:00"), lunchKm:null, before:"the tour vehicle and train to Yabuhara", transfer:{kind:"vehicle+train", mins:45, trains:"KF", ride:20},
+      pts:[
+        pt(0, P.yabuhara, "Yabuhara Stn", "stop", 0,0, {mode:"🚃 JR train", to:"Narai", toLL:P.narai, ride:6, deps:DEP.yabuharaTrain, est:true, freqNote:"every 1–2 h (≈)"}),
+        pt(4, P.torii, "≈ Torii Pass", "pass", 300,20),
+        pt(9, P.narai, "Narai Stn", "end", 50,330, {mode:"🚃 JR train", to:"Shiojiri", toLL:P.shiojiri, ride:20, deps:DEP.naraiTrain, est:true, freqNote:"every 1–2 h (≈)"})
+      ]},
+  d7:{chip:"Day 7", date:"Thu 19 Nov", title:"Karuizawa → Usui Pass → Yokokawa", walkStart:hm("7:00"), lunchKm:9,
+      pts:[
+        pt(0, P.grandKyu, "Le Grand Kyu", "stop", 0,0, {mode:"🚌 Usui line bus", at:P.karuizawaStn, atName:"Karuizawa Stn", extraKm:1, to:"Yokokawa", toLL:P.yokokawa, ride:34, deps:DEP.usuiBus, freqNote:"8 a day (or shinkansen)"}),
+        pt(4, P.kumano, "Usui Pass", "stop", 250,10, {mode:"🚌 Aka Bus (down)", to:"Kyu-Karuizawa", toLL:P.kyuKaru, ride:20, deps:DEP.akaBusDown, weather:true, freqNote:"5 down a day; cancelled in fog"}),
+        pt(13, P.sakamoto, "≈ Sakamoto-juku", "pass", 80,780),
+        pt(16, P.yokokawa, "Yokokawa Stn", "end", 20,80, {mode:"🚃 JR train", to:"Takasaki", toLL:P.takasaki, ride:33, deps:DEP.yokokawaTrain, freqNote:"about hourly"})
+      ]}
+};
+Object.entries(DAYS).forEach(([k,d]) => d.key = k.startsWith('d4') ? 'd4' : k);
+const ORDER = ["d2","d3","d4","d5","d6","d7"];
+/* pre-planned tour transport over the whole trip */
+const TOUR = [
+  {day:"d2", a:[35.36,137.20], b:P.ena, label:"🚃 from Nagoya", stub:true},
+  {day:"d4B", a:P.nagiso, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~50 min"},
+  {day:"d4A", a:P.nojiri, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~40 min"},
+  {day:"d4B", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
+  {day:"d4A", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
+  {day:"d5", a:P.iwaya, b:P.karasawa, dyn:0},
+  {day:"d6", a:P.yamaka, b:P.kisoF, dyn:0},
+  {day:"d6", a:P.kisoF, b:P.yabuhara, dyn:1},
+  {day:"d6", a:P.narai, b:P.shiojiri, label:"🚃 local train, ~25 min"},
+  {day:"d6", a:P.shiojiri, b:P.nagano, label:"🚃 limited express Shinano, ~50 min"},
+  {day:"d6", a:P.nagano, b:P.karuizawaStn, label:"🚅 Hokuriku shinkansen, ~30 min"},
+  {day:"d6", a:P.karuizawaStn, b:P.grandKyu, label:"🚶 ~15 min to Le Grand Kyu", short:true},
+  {day:"d7", a:P.yokokawa, b:P.takasaki, label:"🚃 JR to Takasaki, ~33 min"},
+  {day:"d7", a:P.takasaki, b:[36.20,139.30], label:"🚅 shinkansen to Tokyo, ~50 min", stub:true}
+];
+const NODES = [
+  {ll:P.kisoF, name:"Kiso-Fukushima Stn", days:["d4B","d4A","d6"]},
+  {ll:P.shiojiri, name:"Shiojiri Stn", days:["d6"]},
+  {ll:P.nagano, name:"Nagano Stn", days:["d6"]},
+  {ll:P.karuizawaStn, name:"Karuizawa Stn", days:["d6","d7"]},
+  {ll:P.takasaki, name:"Takasaki Stn", days:["d7"]}
+];
+const INNS = [
+  {n:1, ll:P.ena, name:"Ena Ichikawa Inn"}, {n:2, ll:P.motomiya, name:"Guest House Motomiya"}, {n:3, ll:P.otsumago, name:"Maruya Inn"},
+  {n:4, ll:P.iwaya, name:"Iwaya Inn"}, {n:5, ll:P.yamaka, name:"Yamakanoyu"}, {n:6, ll:P.grandKyu, name:"Le Grand Kyu"}
+];
+
+/* ---------- state ---------- */
+const S = {walkOver:{}, txt:2, txtScale:0.5, day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
+const startOf = d => S.starts[d.key] ?? d.walkStart;            // ▲ = when you leave the inn
+const KF_NORTH = L("7:12 7:52 9:01 11:09 13:09 15:24 18:06 19:06 21:09");   // ≈ Kiso-Fukushima → Yabuhara departures
+function transferOf(d){            // the tour's morning transfer, from the leave time
+  const tr = d.transfer, leave = startOf(d);
+  if (!tr) return null;
+  if (tr.kind === "taxi") return {leave, arrive: leave + tr.mins, legs:[{label:`🚕 tour taxi ${fmt(leave)} → falls ~${fmt(leave + tr.mins)} (≈)`}]};
+  const atStn = leave + tr.mins, dep = KF_NORTH.find(x => x >= atStn) ?? (atStn + 30);
+  return {leave, arrive: dep + tr.ride, atStn, dep, legs:[{label:`🚐 tour vehicle ${fmt(leave)} → station ~${fmt(atStn)} (≈)`}, {label:`🚃 train ${fmt(dep)} → Yabuhara ~${fmt(dep + tr.ride)} (≈ · wait ${dur(dep - atStn)})`}]};
+}
+const walkStartOf = d => S.walkOver[d.key] ?? transferOf(d)?.arrive ?? startOf(d);   // walkOver = "I'm here at…" sets when we really started walking   // walking begins after the transfer
+const near = (a, b) => Math.abs(a[0]-b[0]) < 1e-4 && Math.abs(a[1]-b[1]) < 1e-4;
+function journeyOf(d){   // the planned tour transport, timed: morning transfer + the onward trip after the walk
+  const segs = [], tr = transferOf(d);
+  if (tr && d === DAYS.d5) segs.push({t0:tr.leave, t1:tr.arrive, grp:"am", kind:"ride", mode:"taxi", a:P.iwaya, b:P.karasawa, label:"tour taxi to Karasawa Falls (≈)", to:"Karasawa Falls"});
+  if (tr && d === DAYS.d6){
+    segs.push({t0:tr.leave, t1:tr.atStn, grp:"am", kind:"ride", mode:"van", a:P.yamaka, b:P.kisoF, label:"tour vehicle to Kiso-Fukushima Stn (≈)", to:"Kiso-Fukushima Stn"});
+    if (tr.dep > tr.atStn) segs.push({t0:tr.atStn, t1:tr.dep, grp:"am", kind:"wait", a:P.kisoF, b:P.kisoF, label:`waiting at Kiso-Fukushima for the ${fmt(tr.dep)} train`, to:"Kiso-Fukushima Stn"});
+    segs.push({t0:tr.dep, t1:tr.arrive, grp:"am", kind:"ride", mode:"train", a:P.kisoF, b:P.yabuhara, label:`${fmt(tr.dep)} train to Yabuhara (≈)`, to:"Yabuhara"});
+  }
+  const wo = S.walkOver[d.key]; if (wo != null) for (let i = segs.length-1; i >= 0; i--){ if (segs[i].t0 >= wo) segs.splice(i,1); else segs[i].t1 = Math.min(segs[i].t1, wo); }
+  const chain = legs => { let t = T(d, total(d), S.pace); legs.forEach(l => {
+    const dep = l.deps ? (l.deps.find(x => x >= t) ?? t + 30) : t + (l.wait || 0);
+    if (dep > t) segs.push({t0:t, t1:dep, grp:"pm", kind:"wait", a:l.a, b:l.a, label:`waiting at ${l.from} for the ${fmt(dep)} ${l.what}`, to:l.from});
+    segs.push({t0:dep, t1:dep + l.ride, grp:"pm", kind: l.walk ? "walk" : "ride", mode:l.mode, a:l.a, b:l.b, label: l.walk ? l.what : `${fmt(dep)} ${l.what} to ${l.to}${l.est ? " (≈)" : ""}`, to:l.to});
+    t = dep + l.ride; });
+    const z = segs.at(-1); segs.push({t0:z.t1, t1:1e9, grp:"pm", kind:"wait", done:true, a:z.b, b:z.b, label:`at ${z.to}`, to:z.to}); };
+  const toIwaya = {a:P.kisoF, b:P.iwaya, ride:5, walk:true, what:"walking to Iwaya Inn", to:"Iwaya Inn"};
+  if (d === DAYS.d4B) chain([{a:P.nagiso, b:P.kisoF, from:"Nagiso Stn", deps:DEP.nagisoTrain, ride:50, mode:"train", what:"train", to:"Kiso-Fukushima"}, toIwaya]);
+  if (d === DAYS.d4A) chain([{a:P.nojiri, b:P.kisoF, from:"Nojiri Stn", deps:DEP.nojiriTrain, ride:40, mode:"train", what:"train", to:"Kiso-Fukushima", est:true}, toIwaya]);
+  if (d === DAYS.d6) chain([{a:P.narai, b:P.shiojiri, from:"Narai Stn", deps:DEP.naraiTrain, ride:25, mode:"train", what:"train", to:"Shiojiri", est:true},
+                            {a:P.shiojiri, b:P.nagano, from:"Shiojiri", wait:15, ride:50, mode:"train", what:"Shinano express", to:"Nagano", est:true},
+                            {a:P.nagano, b:P.karuizawaStn, from:"Nagano", wait:10, ride:30, mode:"shinkansen", what:"shinkansen", to:"Karuizawa", est:true},
+                            {a:P.karuizawaStn, b:P.grandKyu, ride:15, walk:true, what:"walking to Le Grand Kyu", to:"Le Grand Kyu"}]);
+  if (d === DAYS.d7) chain([{a:P.yokokawa, b:P.takasaki, from:"Yokokawa Stn", deps:DEP.yokokawaTrain, ride:33, mode:"train", what:"train", to:"Takasaki"},
+                            {a:P.takasaki, b:[36.20,139.30], from:"Takasaki", wait:10, ride:50, mode:"shinkansen", what:"shinkansen", to:"Tokyo", est:true}]);
+  return segs;
+}
+const segAt = (d, t) => journeyOf(d).find(g => t >= g.t0 && t < g.t1);
+function bowPt(p, q, f, k=0.14, cap=40){ const vx = q[0]-p[0], vy = q[1]-p[1], l = Math.hypot(vx,vy) || 1, off = Math.min(l*k, cap);
+  const c = [(p[0]+q[0])/2 - vy/l*off, (p[1]+q[1])/2 + vx/l*off], u = 1-f;
+  return [u*u*p[0] + 2*u*f*c[0] + f*f*q[0], u*u*p[1] + 2*u*f*c[1] + f*f*q[1]]; }
+const D = () => S.day === "d4" ? DAYS["d4"+S.course] : DAYS[S.day];
+const dayObj = k => k === "d4" ? DAYS["d4"+S.course] : DAYS[k];
+
+/* ---------- walking model ---------- */
+const segMin = (d, i, pace) => (d.pts[i+1].km - d.pts[i].km) * pace + d.pts[i+1].up / 100 * 15;
+const walkBetween = (d, a, b, pace) => { let m = 0;
+  for (let i=0;i<d.pts.length-1;i++){ const s = d.pts[i].km, e = d.pts[i+1].km, lo = Math.max(a,s), hi = Math.min(b,e); if (hi > lo) m += (hi-lo)/(e-s) * segMin(d,i,pace); }
+  return m; };
+const walkBack = (d, from, to, pace) => { let m = 0;
+  for (let i=0;i<d.pts.length-1;i++){ const s = d.pts[i].km, e = d.pts[i+1].km, lo = Math.max(to,s), hi = Math.min(from,e); if (hi > lo){ m += (hi-lo)*pace + (hi-lo)/(e-s)*d.pts[i+1].down/100*15; } }
+  return m; };
+const total = d => d.pts.at(-1).km;
+const T = (d, km, pace) => walkStartOf(d) + walkBetween(d, 0, km, pace) + (d.lunchKm != null && km > d.lunchKm + 1e-9 ? LUNCH : 0);
+function Pos(d, t, pace){
+  if (t <= walkStartOf(d)) return {km:0, state:"before"};
+  let w = t - walkStartOf(d);
+  if (d.lunchKm != null){ const wl = walkBetween(d,0,d.lunchKm,pace);
+    if (w > wl && w <= wl + LUNCH) return {km:d.lunchKm, state:"lunch"};
+    if (w > wl + LUNCH) w -= LUNCH; }
+  if (w >= walkBetween(d,0,total(d),pace)) return {km:total(d), state:"arrived"};
+  let acc = 0;
+  for (let i=0;i<d.pts.length-1;i++){ const m = segMin(d,i,pace);
+    if (acc + m >= w) return {km: d.pts[i].km + (w-acc)/m*(d.pts[i+1].km - d.pts[i].km), state:"walking"};
+    acc += m; }
+  return {km:total(d), state:"arrived"};
+}
+const llAt = (d, km) => { for (let i=0;i<d.pts.length-1;i++){ const a=d.pts[i], b=d.pts[i+1];
+    if (km <= b.km + 1e-9){ const f = (km-a.km)/(b.km-a.km || 1); return [a.ll[0]+f*(b.ll[0]-a.ll[0]), a.ll[1]+f*(b.ll[1]-a.ll[1])]; } }
+  return d.pts.at(-1).ll; };
+const nextDep = (deps, t) => deps.find(x => x >= t - 0.01);
+const afterDep = (deps, dep) => dep == null ? null : deps.find(x => x > dep + 0.01);
+
+/* escape zones: green = bus/train exits both ways · yellow = no-exit stretch, turning back is the way out · orange = past the point of no return, keep going */
+const ZONE_COL = {go:"#5a9a5b", back:"#e9c32c", commit:"#e4572e", nobus:"#8e1b3a"};
+/* the same zones, but timed: where the way out is there, but its last bus/train will have gone by the time you'd reach it → "nobus" */
+function timedZones(d, pace){   // burgundy = neither the stop ahead nor the stop behind has a bus/train left when you'd get there
+  const geo = zonesOf(d, pace), out = [], hops = d.pts.filter(p => p.hop);
+  const fwdOk = x => { const f = hops.find(p => p.km >= x - 1e-6); if (!f) return true;               // no stop ahead: the walk ends at the inn
+    return nextDep(f.hop.deps, T(d, f.km, pace) + (f.hop.extraKm||0)*pace) != null; };
+  const backOk = x => { const b = [...hops].reverse().find(p => p.km < x - 1e-6); if (!b) return false;
+    return nextDep(b.hop.deps, T(d, x, pace) + walkBack(d, x, b.km, pace) + (b.hop.extraKm||0)*pace) != null; };
+  geo.forEach(z => { if (z.b - z.a < 0.01) return;
+    const n = Math.max(2, Math.ceil((z.b - z.a) / 0.05));
+    for (let i = 0; i < n; i++){ const a = z.a + (z.b - z.a)*i/n, b = z.a + (z.b - z.a)*(i+1)/n, x = (a+b)/2, F = fwdOk(x), B = backOk(x);
+      const cls = !F && !B ? "nobus" : z.z === "go" ? "go" : z.z === "back" ? (B ? "back" : "commit") : (F ? "commit" : "back");
+      const last = out.at(-1); if (last && last.z === cls && Math.abs(last.b - a) < 1e-6) last.b = b; else out.push({a, b, z:cls}); }
+  });
+  return out;
+}
+
+function zonesOf(d, pace){
+  const ex = [0, ...d.pts.filter(p => p.hop).map(p => p.km), total(d)].filter((v,i,a) => a.indexOf(v) === i).sort((a,b) => a-b), out = [];
+  for (let i = 0; i < ex.length-1; i++){ const a = ex[i], b = ex[i+1];
+    const blind = d.pts.some(p => p.kind === "pass" && p.km > a + 1e-6 && p.km < b - 1e-6);
+    if (!blind){ out.push({a, b, z:"go"}); continue; }
+    const ap = d.pts.find(p => p.hop && Math.abs(p.km - a) < 1e-6), extra = (ap?.hop.extraKm || 0) * pace;
+    const backer = x => walkBack(d, x, a, pace) + extra - walkBetween(d, x, b, pace);   // < 0 → turning back is quicker
+    let lo = a, hi = b;
+    if (backer(b) < 0) lo = hi = b; else if (backer(a) >= 0) lo = hi = a;
+    else for (let k = 0; k < 40; k++){ const m = (lo+hi)/2; if (backer(m) < 0) lo = m; else hi = m; }
+    if (lo > a) out.push({a, b:lo, z:"back"});
+    if (lo < b) out.push({a:lo, b, z:"commit"});
+  }
+  return out;
+}
+const zoneAt = (d, km, pace) => (timedZones(d, pace).find(z => km >= z.a - 1e-6 && km <= z.b + 1e-6) || {z:"go"}).z;
+function compute(){
+  const d = D(), pace = S.pace, km = S.km, t = Math.max(S.t, walkStartOf(d));
+  const fwdPt = d.pts.find(p => p.hop && p.km >= km - 1e-6);
+  const backPt = [...d.pts].reverse().find(p => p.hop && p.km < km - 0.05);
+  let fwd=null, back=null;
+  if (fwdPt){ const walk = walkBetween(d, km, fwdPt.km, pace) + (d.lunchKm != null && km < d.lunchKm - 1e-6 && d.lunchKm < fwdPt.km - 1e-6 ? LUNCH : 0);
+    const arr = t + walk, dep = nextDep(fwdPt.hop.deps, arr);
+    fwd = {p:fwdPt, dist:fwdPt.km-km, walk, arr, dep, dep2: afterDep(fwdPt.hop.deps, dep), wait: dep!=null ? dep-arr : null}; }
+  if (backPt){ const ex = backPt.hop.extraKm||0, walk = walkBack(d, km, backPt.km, pace) + ex*pace;
+    const arr = t + walk, dep = nextDep(backPt.hop.deps, arr);
+    back = {p:backPt, dist:km-backPt.km+ex, walk, arr, dep, dep2: afterDep(backPt.hop.deps, dep), wait: dep!=null ? dep-arr : null}; }
+  if (fwd && back && fwd.walk <= back.walk) back.off = true;
+  if (back && back.dep == null) { back.off = true; back.noBus = true; }
+  if (fwd && fwd.dep == null) fwd.noBus = true;   // the stop ahead has nothing left today   // burgundy: turning back reaches the stop after its last departure
+  return {fwd, back};
+}
+
+/* ---------- map: base projection + view transform ---------- */
+const svg = document.getElementById("map"), wrap = document.getElementById("mapwrap");
+let W = 600, H = 400, BASE = null, V = {k:1, tx:0, ty:0};
+const ALL = [];
+Object.values(DAYS).forEach(d => d.pts.forEach(p => { ALL.push(p.ll); if (p.hop?.at) ALL.push(p.hop.at); }));
+TOUR.forEach(t => { if (!t.stub) { ALL.push(t.a); ALL.push(t.b); } });
+const LAT0 = Math.min(...ALL.map(a=>a[0])), LAT1 = Math.max(...ALL.map(a=>a[0])), LON0 = Math.min(...ALL.map(a=>a[1])), LON1 = Math.max(...ALL.map(a=>a[1]));
+const COSF = Math.cos((LAT0+LAT1)/2*Math.PI/180);
+const base = ([la,lo]) => [(lo-LON0)*COSF*1000, (LAT1-la)*1000];     // world units
+const BW = (LON1-LON0)*COSF*1000, BH = (LAT1-LAT0)*1000;
+const scr = ll => { const [x,y] = base(ll); return [x*V.k+V.tx, y*V.k+V.ty]; };
+const unscr = ([x,y]) => [(x-V.tx)/V.k, (y-V.ty)/V.k];
+let K_MIN = 1, K_MAX = 1;
+function sizeMap(){
+  const r = wrap.getBoundingClientRect(); W = Math.max(240, r.width); H = Math.max(200, r.height);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  K_MIN = Math.min(W/BW, H/BH) * 0.85; K_MAX = K_MIN * 90;
+}
+function clampView(){
+  V.k = Math.min(Math.max(V.k, K_MIN), K_MAX);
+  const mX = W*0.45, mY = H*0.45;   // keep the trip from sliding off: at least ~half the view overlaps it
+  V.tx = Math.min(Math.max(V.tx, W - mX - BW*V.k), mX);
+  V.ty = Math.min(Math.max(V.ty, H - mY - BH*V.k), mY);
+}
+function fitBox(lls, pad){ pad = pad ?? Math.min(70, W*0.1);
+  const xs = lls.map(base);
+  const x0 = Math.min(...xs.map(a=>a[0])), x1 = Math.max(...xs.map(a=>a[0])), y0 = Math.min(...xs.map(a=>a[1])), y1 = Math.max(...xs.map(a=>a[1]));
+  const topPad = 30, botPad = 40;
+  const k = Math.min((W-2*pad)/Math.max(x1-x0, 1e-3), (H-topPad-botPad)/Math.max(y1-y0,1e-3));
+  V.k = Math.min(Math.max(k, K_MIN), K_MAX*0.6);
+  V.tx = W/2 - (x0+x1)/2*V.k; V.ty = topPad + (H-topPad-botPad)/2 - (y0+y1)/2*V.k;
+  clampView();
+}
+const fitDay = () => { const d = D(); const lls = d.pts.map(p=>p.ll); d.pts.forEach(p => p.hop?.at && lls.push(p.hop.at)); fitBox(lls); };
+const fitTrip = () => fitBox(ALL, 30);
+
+/* ---------- drawing ---------- */
+const path = arr => arr.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+const routeSlice = (d, a, b) => { const out=[scr(llAt(d,a))]; d.pts.forEach(p => { if (p.km > a && p.km < b) out.push(scr(p.ll)); }); out.push(scr(llAt(d,b))); return out; };
+function arcPath(a, b, side, strength=0.42, minOff=34, maxOff=150){
+  const vx = b[0]-a[0], vy = b[1]-a[1], l = Math.hypot(vx, vy) || 1, nx = -vy/l, ny = vx/l;
+  const off = Math.min(Math.max(l*strength, minOff), maxOff) * side;
+  const p1 = [a[0] + nx*off + vx*0.10, a[1] + ny*off + vy*0.10];
+  const p2 = [b[0] + nx*off*0.9 + vx*0.30, b[1] + ny*off*0.9 + vy*0.30];   // overshoot past the stop, then curl back in
+  return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} C${p1[0].toFixed(1)} ${p1[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
+}
+const offsetLine = (a, b, dd) => { const l = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1; const nx = -(b[1]-a[1])/l*dd, ny = (b[0]-a[0])/l*dd; return [[a[0]+nx,a[1]+ny],[b[0]+nx,b[1]+ny]]; };
+let LABELS = [], OBST = [];
+const overlaps = (r, q) => !(r.x+r.w < q.x || q.x+q.w < r.x || r.y+r.h < q.y || q.y+q.h < r.y);
+function addLabel(x, y, text, color, o={}){ LABELS.push({x, y, text, color, boxed:false, bold:o.boxed !== false || o.bold, pri:o.pri||0, tail:o.tail||"", size:(o.size||11.5)*S.txtScale, time:o.time ?? null}); }
+function placeLabels(){
+  if (S.txt === 1) { LABELS = []; return ""; }   // map text hidden
+  const TS = S.txtScale;
+  const placed = [], cands = [[13,-6,"start"],[-13,-6,"end"],[13,16,"start"],[-13,16,"end"],[0,-20,"middle"],[0,30,"middle"],[20,-24,"start"],[-20,-24,"end"],[20,32,"start"],[-20,32,"end"]];
+  LABELS.sort((a,b)=>b.pri-a.pri);
+  let out = "";
+  const lw = l => (l.text + l.tail).length * l.size*0.56 + (l.boxed ? 14 : 4)*TS, lh = l => l.size + 7*TS;
+  const drawOne = (l, r) => {
+    if (l.boxed) out += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${r.h/2}" fill="#fffdf8" stroke="${l.color}" stroke-width="1.5" opacity=".96"/>`;
+    out += `<text x="${r.x + (l.boxed?7:2)*TS}" y="${r.y+r.h-5*TS}" font-size="${l.size}" font-weight="${l.bold?800:700}" fill="${l.color}" ${l.boxed?"":`paint-order="stroke" stroke="#fbf6ec" stroke-width="${4*TS}"`}>${esc(l.text)}${l.tail ? `<tspan fill="#2b231e">${esc(l.tail)}</tspan>` : ""}</text>`;
+  };
+  const timed = LABELS.filter(l => l.time != null), used = new Set();
+  timed.forEach(l => {
+    if (used.has(l)) return;
+    const group = timed.filter(m => !used.has(m) && Math.hypot(m.x-l.x, m.y-l.y) < 34);
+    if (group.length < 2) return;
+    group.forEach(m => used.add(m));
+    group.sort((a,b) => a.time - b.time);
+    const cx = group.reduce((a,m)=>a+m.x,0)/group.length, cy = group.reduce((a,m)=>a+m.y,0)/group.length;
+    const w = Math.max(...group.map(lw)), gap = 3, H0 = group.reduce((a,m)=>a+lh(m)+gap,0) - gap;
+    let spot = null;
+    for (const [dx, an] of [[14,"start"],[-14,"end"]]) for (const dy of [0, -H0/2 - 14, H0/2 + 14]){
+      const x0 = an === "end" ? cx + dx - w : cx + dx, y0 = cy + dy - H0/2, box = {x:x0, y:y0, w, h:H0};
+      if (box.x < 4 || box.x + w > W-48 || box.y < 4 || box.y + H0 > H-4) continue;
+      if ([...placed, ...OBST].some(q => overlaps(box, q))) continue;
+      spot = box; break;
+    }
+    if (!spot) spot = {x: Math.min(Math.max(cx + 14, 4), W-48-w), y: Math.min(Math.max(cy - H0/2, 4), H-4-H0), w, h:H0};
+    let y = spot.y;
+    group.forEach(m => { const r = {x:spot.x, y, w:lw(m), h:lh(m)}; placed.push(r); drawOne(m, r); y += lh(m) + gap; });
+  });
+  LABELS = LABELS.filter(l => !used.has(l));
+  LABELS.forEach(l => {
+    const w = (l.text + l.tail).length * l.size*0.56 + (l.boxed ? 14 : 4)*TS, h = l.size + 7*TS;
+    let best = null;
+    for (const [dx,dy,an] of cands){
+      const x0 = an==="end" ? l.x+dx-w : an==="middle" ? l.x+dx-w/2 : l.x+dx, r = {x:x0, y:l.y+dy-h+4, w, h};
+      if (r.x < 4 || r.x+r.w > W-48 || r.y < 4 || r.y+r.h > H-4) continue;
+      if ([...placed, ...OBST].some(q => overlaps(r,q))) continue;
+      best = r; break;
+    }
+    if (!best){
+      // scan further up/down on both sides before giving up
+      outer: for (let dy = 40; dy <= 120; dy += 16) for (const sgn of [-1, 1]) for (const side of [1, -1]){
+        const x0 = side > 0 ? l.x + 14 : l.x - 14 - w, r = {x:x0, y:l.y + sgn*dy - h/2, w, h};
+        if (r.x < 4 || r.x+r.w > W-48 || r.y < 4 || r.y+r.h > H-4) continue;
+        if ([...placed, ...OBST].some(q => overlaps(r,q))) continue;
+        best = r; break outer;
+      }
+      if (!best){ if (l.pri < 3) return; best = {x:Math.min(Math.max(l.x+12,4), W-48-w), y:Math.min(Math.max(l.y-18,4), H-h-4), w, h}; }
+      out += `<path d="M${l.x} ${l.y} L${best.x + (best.x > l.x ? 0 : best.w)} ${best.y + best.h/2}" stroke="${l.color}" stroke-width="1" opacity=".5"/>`;
+    }
+    placed.push(best);
+    if (l.boxed) out += `<rect x="${best.x}" y="${best.y}" width="${best.w}" height="${best.h}" rx="${best.h/2}" fill="#fffdf8" stroke="${l.color}" stroke-width="1.5" opacity=".96"/>`;
+    out += `<text x="${best.x + (l.boxed?7:2)*TS}" y="${best.y+best.h-5*TS}" font-size="${l.size}" font-weight="${l.bold?800:700}" fill="${l.color}" ${l.boxed?"":`paint-order="stroke" stroke="#fbf6ec" stroke-width="${4*TS}"`}>${esc(l.text)}${l.tail ? `<tspan fill="#2b231e">${esc(l.tail)}</tspan>` : ""}</text>`;
+  });
+  return S.txt === 2 ? `<g opacity=".5">${out}</g>` : out;
+}
+
+/* a cute squirrel facing right (feet at 0,0) */
+function squirrel(x, y, s, acc){
+  const body="#c9824f", tail="#b06a3c", cream="#f8e6cc", dark="#3b2a22";
+  let a = "";
+  if (acc === "kasa") a = `<path d="M-3 -23 L8 -32 L19 -23 Z" fill="#e8c57d" stroke="#b78f45" stroke-width="1"/>`;
+  if (acc === "scarf") a = `<path d="M2 -12 Q8 -9 14 -12 L13 -8 Q8 -5 3 -8 Z" fill="#4f9a5a"/>`;
+  if (acc === "pack") a = `<rect x="-7" y="-15" width="7" height="9" rx="2.5" fill="#4f9a5a"/><circle cx="-3.5" cy="-5" r="1.8" fill="#3d7a47"/>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})">
+    <ellipse cx="2" cy="1" rx="11" ry="2.4" fill="#000" opacity=".12"/>
+    <path d="M-4 0 C-21 4 -27 -14 -19 -24 C-13 -32 -2 -30 -2 -21 C-2 -15 -9 -15 -10 -10 C-11 -6 -8 -2 -4 0 Z" fill="${tail}"/>
+    <path d="M-15 -22 C-11 -27 -6 -26 -6 -21" stroke="${cream}" stroke-width="1.6" fill="none" opacity=".7"/>
+    <ellipse cx="2" cy="-7" rx="8" ry="8.5" fill="${body}"/>
+    <ellipse cx="5" cy="-5.5" rx="4.4" ry="5.8" fill="${cream}"/>
+    <circle cx="8" cy="-18" r="7" fill="${body}"/>
+    <path d="M4 -23 L6.5 -30 L10 -24 Z" fill="${body}"/><path d="M5.6 -24 L6.6 -27.5 L8.4 -24.4 Z" fill="#f2b9a5"/>
+    <circle cx="11" cy="-19" r="1.5" fill="${dark}"/><circle cx="11.5" cy="-19.6" r=".5" fill="#fff"/>
+    <circle cx="12" cy="-15.2" r="1.9" fill="#f4a7b9" opacity=".75"/>
+    <circle cx="15" cy="-17.2" r="1.1" fill="${dark}"/>
+    <ellipse cx="0" cy="-0.6" rx="2.6" ry="1.4" fill="${tail}"/><ellipse cx="6" cy="-0.6" rx="2.6" ry="1.4" fill="${tail}"/>
+    ${a}</g>`;
+}
+function rideIcon(x, y, mode){   // the vehicle, with the three squirrels peeking out of the windows
+  const head = (hx, hy, mum) => `<path d="M${hx-3} ${hy-1.6} L${hx-2.4} ${hy-5.8} L${hx-0.6} ${hy-2.6}Z M${hx+0.8} ${hy-2.6} L${hx+2.4} ${hy-5.8} L${hx+3} ${hy-1.6}Z" fill="#a9653a"/><path d="M${hx-3.4} ${hy+3} q-3.5 -3 -1 -7" stroke="#b5703f" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="${hx}" cy="${hy}" r="3.2" fill="#c9824f"/><ellipse cx="${hx+1}" cy="${hy+1.2}" rx="1.6" ry="1.1" fill="#f3dcc2"/><circle cx="${hx+1.4}" cy="${hy-0.6}" r=".7" fill="#3b2a22"/>`
+    + (mum ? `<path d="M${hx-4.2} ${hy-2.2} L${hx} ${hy-5.6} L${hx+4.2} ${hy-2.2}Z" fill="#e3c27a" stroke="#8a6a2f" stroke-width=".5"/>` : "");
+  const win = (wx, wy, w, h) => `<rect x="${wx}" y="${wy}" width="${w}" height="${h}" rx="2" fill="#cfe3ef"/>`;
+  let body;
+  if (mode === "shinkansen") body = `<path d="M-26 -6 L-26 -22 Q-26 -26 -22 -26 L14 -26 Q26 -26 32 -9 Q33 -6 28 -6 Z" fill="#fff" stroke="#3b2f2a" stroke-width="1.5"/><rect x="-26" y="-12" width="56" height="3" fill="#3d5a99"/>
+      ${win(-21,-23,10,7)}${win(-8,-23,10,7)}${win(5,-23,10,7)}${head(-16,-18.5)}${head(-3,-18.5)}${head(10,-18.5,1)}`;
+  else if (mode === "van" || mode === "taxi") body = `<rect x="-20" y="-24" width="40" height="18" rx="6" fill="${mode === "taxi" ? "#f2c94c" : "#5b7bc0"}" stroke="#3b2f2a" stroke-width="1.5"/>
+      ${mode === "taxi" ? `<rect x="-6" y="-29" width="12" height="5" rx="2" fill="#fffdf8" stroke="#3b2f2a" stroke-width="1"/>` : ""}
+      ${win(-16,-21,9,7)}${win(-5,-21,9,7)}${win(6,-21,9,7)}${head(-11.5,-16.5)}${head(-0.5,-16.5)}${head(10.5,-16.5,1)}
+      <circle cx="-11" cy="-5" r="3.3" fill="#3b2f2a"/><circle cx="11" cy="-5" r="3.3" fill="#3b2f2a"/>`;
+  else body = `<rect x="-25" y="-26" width="50" height="21" rx="6" fill="#f7f3ea" stroke="#3b2f2a" stroke-width="1.5"/><rect x="-25" y="-12" width="50" height="4" fill="#e08a12"/>
+      ${win(-20,-23,11,8)}${win(-5.5,-23,11,8)}${win(9,-23,11,8)}${head(-14.5,-18)}${head(0,-18)}${head(14.5,-18,1)}
+      <circle cx="-15" cy="-4" r="3" fill="#3b2f2a"/><circle cx="15" cy="-4" r="3" fill="#3b2f2a"/>`;
+  return `<g transform="translate(${x} ${y - 4}) scale(1.4)"><ellipse cx="0" cy="-2" rx="22" ry="3" fill="#000" opacity=".12"/>${body}</g>`;
+}
+function pin(x, y){
+  // round badge with a pointer whose tip sits exactly on the route point (x, y)
+  const cy = y - 30;
+  return `<g>
+    <ellipse cx="${x}" cy="${y+1}" rx="6" ry="2.2" fill="#000" opacity=".18"/>
+    <path d="M${x-8} ${cy+12} L${x} ${y} L${x+8} ${cy+12} Z" fill="#e2553f"/>
+    <circle cx="${x}" cy="${cy}" r="17" fill="#fffdf8" stroke="#e2553f" stroke-width="3"/>
+    ${squirrel(x-2, cy+10, 0.62, "kasa")}
+  </g>`;
+}
+function render(){
+  const d = D(), pace = S.pace, km = S.km;
+  const {fwd, back} = compute();
+  LABELS = []; OBST = [];
+  let g = `<rect width="${W}" height="${H}" fill="#fbf6ec"/>`;
+  for (let i=0;i<6;i++) g += `<circle cx="${W-6}" cy="${H-6}" r="${18+i*13}" fill="none" stroke="#f4a7b9" stroke-opacity=".22" stroke-width="2"/>`;
+  g += `<defs><marker id="arrF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2e8b3e"/></marker><marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e08a12"/></marker>
+        <marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d5a99"/></marker></defs>`;
+  const selKey = S.day === "d4" ? "d4"+S.course : S.day;
+
+  // other days' walks (faded) with day tags
+  ORDER.forEach(k => { const o = dayObj(k); if (o === d) return;
+    g += `<path d="${path(o.pts.map(p=>scr(p.ll)))}" stroke="#5a9a5b" stroke-opacity=".35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+    const m = scr(o.pts[Math.floor(o.pts.length/2)].ll); addLabel(m[0], m[1], o.chip, "#8a7a6e", {boxed:false, pri:0, size:11});
+  });
+  // tour transport (all days; today's bolder)
+  const bow = (p, q, k=0.14, cap=40) => { const vx = q[0]-p[0], vy = q[1]-p[1], l = Math.hypot(vx,vy) || 1, off = Math.min(l*k, cap);
+    const c = [(p[0]+q[0])/2 - vy/l*off, (p[1]+q[1])/2 + vx/l*off]; return {d:`M${p[0].toFixed(1)} ${p[1].toFixed(1)} Q${c[0].toFixed(1)} ${c[1].toFixed(1)} ${q[0].toFixed(1)} ${q[1].toFixed(1)}`, mid:[(p[0]+2*c[0]+q[0])/4, (p[1]+2*c[1]+q[1])/4]}; };
+  const showTour = t => !((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course);
+  TOUR.forEach(t => { if (!showTour(t)) return;
+    const pa = scr(t.a), pb = scr(t.b), mine = t.day === selKey, bw = bow(pa, pb);
+    g += `<path d="${bw.d}" stroke="#3d5a99" stroke-opacity="${mine?1:.4}" stroke-width="${mine?4:2.5}" stroke-dasharray="${t.short ? "1 5" : "1 7"}" stroke-linecap="round" fill="none" marker-end="url(#arrA)"/>`;
+    const lab = t.dyn != null ? transferOf(DAYS[t.day])?.legs[t.dyn]?.label : t.label;
+    if (mine && lab) addLabel(bw.mid[0], bw.mid[1], lab, "#3d5a99", {pri:2, size:11});
+  });
+  NODES.forEach(n => { const [x,y] = scr(n.ll), mine = n.days.includes(selKey);
+    g += `<rect x="${x-6}" y="${y-6}" width="12" height="12" rx="3" fill="#fff" stroke="#3d5a99" stroke-width="${mine?3:2}" opacity="${mine?1:.6}"/>`;
+    OBST.push({x:x-7,y:y-7,w:14,h:14});
+    addLabel(x, y, `🚉 ${n.name}`, "#3d5a99", {boxed:false, pri: mine ? 2 : 0, size:10.5});
+  });
+  // inns
+  INNS.forEach(n => { const [x,y] = scr(n.ll); g += `<text x="${x}" y="${y+5}" font-size="14" text-anchor="middle">🏮</text>`; OBST.push({x:x-8,y:y-8,w:16,h:16});
+    addLabel(x, y, `Night ${n.n} · ${n.name}`, "#8a7a6e", {boxed:false, pri:0, size:10.5}); });
+
+  // today's route
+  const all = d.pts.map(p=>scr(p.ll));
+  g += `<path id="route" d="${path(all)}" stroke="#5a9a5b" stroke-opacity="0" stroke-width="16" fill="none"/>`;
+  timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
+    g += `<path d="${path(routeSlice(d, z.a, z.b))}" stroke="${ZONE_COL[z.z]}" stroke-opacity="${z.z === "go" ? .3 : .55}" stroke-width="12" stroke-linecap="${z.z === "go" ? "round" : "butt"}" stroke-linejoin="round" fill="none"/>`; });
+  if (km > 0.01) g += `<path d="${path(routeSlice(d,0,km))}" stroke="#b7cfb3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+  d.pts.forEach(p => { if (p.hop?.at){ const q = scr(p.hop.at); g += `<path d="${path([scr(p.ll), q])}" stroke="#5a9a5b" stroke-width="3" stroke-dasharray="2 5" fill="none"/><circle cx="${q[0]}" cy="${q[1]}" r="6" fill="#fff" stroke="#3b2f2a" stroke-width="3"/>`;
+    OBST.push({x:q[0]-7,y:q[1]-7,w:14,h:14}); const qF = fwd && fwd.p === p, qB = back && !back.off && back.p === p; addLabel(q[0], q[1], `${qF ? "➡️ " : qB ? "↩️ " : ""}${p.hop.atName}${qF || qB ? "" : " 🚌"}`, qF ? "#2e8b3e" : qB ? "#c0700a" : "#3b2f2a", {tail: qF ? ` · arrive @ ${fmt(fwd.arr)} 🚌` : qB ? ` · arrive @ ${fmt(back.arr)} 🚌` : "",boxed: qF || qB, bold: qF || qB, pri: qF || qB ? 3 : 2, time: qF ? fwd.arr : qB ? back.arr : null}); } });
+  const js = segAt(d, S.t), pre = !js && d.transfer && S.t < startOf(d) ? journeyOf(d)[0] : null, opt = !js && !pre;   // pre = still at the inn before the tour transfer   // riding the planned transport: no get-out options to show
+  const isTourLeg = o => TOUR.some(t => t.day === selKey && near(t.a, o.p.hop.at || o.p.ll) && near(t.b, o.p.hop.toLL));   // same trip as the planned train: draw it once
+  const hopLine = (o, side, color, marker) => { if (isTourLeg(o)) return ""; const h = o.p.hop, from = scr(h.at || o.p.ll), to = scr(h.toLL);
+    if (Math.hypot(to[0]-from[0], to[1]-from[1]) < 8) return "";
+    let out = `<path d="${arcPath(from, to, side)}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round"/>`
+      + `<path d="${arcPath(from, to, side)}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" marker-end="url(#${marker})"/>`
+      + `<circle cx="${to[0]}" cy="${to[1]}" r="6" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+    if (o.dep != null && h.ride) addLabel(to[0], to[1], `${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${h.to} ~${fmt(o.dep + h.ride)}`, side > 0 ? "#2e8b3e" : "#c0700a", {pri:2, boxed:true, time:o.dep + h.ride});
+    return out; };
+  if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
+  if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
+    if (back.p.hop.at) g += `<path d="${path([scr(back.p.ll), scr(back.p.hop.at)])}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
+    if (!fwd || back.p !== fwd.p) g += hopLine(back, -1, "#e08a12", "arrB"); }
+  // points of today
+  d.pts.forEach(p => { const [x,y] = scr(p.ll);
+    if (p.kind === "pass") g += `<path d="M${x-11} ${y+8}L${x} ${y-11}L${x+11} ${y+8}z" fill="#a7c79c" stroke="#5a9a5b" stroke-width="2"/><path d="M${x-4} ${y-4}L${x} ${y-11}L${x+4} ${y-4}z" fill="#fff"/>`;
+    else { g += `<circle cx="${x}" cy="${y}" r="${p.kind==="end"?9:7}" fill="#fff" stroke="${p.hop ? "#3b2f2a" : "#5a9a5b"}" stroke-width="3"/>`;
+      if (p.kind === "end") g += `<text x="${x}" y="${y+4}" font-size="10" text-anchor="middle">🏁</text>`; }
+    OBST.push({x:x-11,y:y-11,w:22,h:22});
+    const icon = p.hop ? " " + p.hop.mode.split(" ")[0] : (p.kind === "pass" ? " ⛰️" : "");
+    const isF = opt && fwd && fwd.p === p && !p.hop?.at, isB = opt && back && !back.off && back.p === p && !p.hop?.at && (!fwd || back.p !== fwd.p);
+    if (isF || isB) g += `<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="${isF ? "#2e8b3e" : "#e08a12"}" stroke-width="3"/>`;
+    const lt = isF ? fwd.arr : isB ? back.arr : T(d, p.km, pace);
+    addLabel(x, y, (isF || isB) ? `${isF ? "➡️ " : "↩️ "}${p.name}` : `${p.name} · ${fmt(lt)}${icon}`, isF ? "#2e8b3e" : isB ? "#c0700a" : "#3b2f2a", {tail: (isF || isB) ? ` · arrive @ ${fmt(lt)}${icon}` : "",boxed: isF || isB, bold: isF || isB, pri: isF || isB ? 3 : 2, time: (isF || isB) ? lt : null});
+  });
+  const tag = (o, label, color) => { const [x,y] = scr(o.p.hop.at || o.p.ll), ic = o.p.hop.mode.split(" ")[0];   // next two departures, one per line
+    if (o.dep == null) { addLabel(x, y, `${ic} none left today`, color, {pri:3, bold:true, time:1e9}); return; }
+    addLabel(x, y, `${ic} ${fmt(o.dep)} · wait ${dur(o.wait)}${o.dep2 == null ? " · last one!" : ""}`, color, {pri:3, bold:true, time:o.dep});
+    if (o.dep2 != null) addLabel(x, y, `${ic} ${fmt(o.dep2)} · wait ${dur(o.dep2 - o.arr)}`, color, {pri:3, bold:true, time:o.dep2}); };
+  if (fwd && opt && !fwd.noBus) tag(fwd, "➡️", "#2e8b3e");
+  if (opt && back && !back.off && (!fwd || back.p !== fwd.p)) tag(back, "↩️", "#c0700a");
+  // squirrels: walking, or riding the planned tour transport together
+  let [wx,wy] = scr(llAt(d, km));
+  if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0)/Math.max(js.t1 - js.t0, 1), a = scr(js.a), b = scr(js.b);
+    [wx, wy] = js.kind === "ride" ? bowPt(a, b, f) : [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; }
+  if (pre) [wx, wy] = scr(pre.a);
+  OBST.push(js && js.kind === "ride" ? {x:wx-38,y:wy-44,w:76,h:46} : {x:wx-20,y:wy-50,w:40,h:52});
+  const LBL = `<g pointer-events="none">${placeLabels()}</g>`;   // full-strength text sits over the squirrels, faded text under them
+  if (S.txt !== 0) g += LBL;
+  const routePx = d.pts.slice(1).reduce((a,p,i) => { const q = scr(d.pts[i].ll), r = scr(p.ll); return a + Math.hypot(r[0]-q[0], r[1]-q[1]); }, 0);
+  const pxPerKm = routePx / Math.max(total(d), 0.1);
+  const s1 = Math.min(36, Math.max(16, pxPerKm*0.45)), s2 = Math.min(68, Math.max(31, pxPerKm*0.85));   // closer together when zoomed out
+  const behind = (dist) => { // a point `dist` px back along today's route; if the route runs out, wait at its start
+    const pts = routeSlice(d, 0, Math.max(km, 0.0001)).reverse(); let left = dist;
+    for (let i=0;i<pts.length-1;i++){ const a = pts[i], b = pts[i+1], l = Math.hypot(b[0]-a[0], b[1]-a[1]);
+      if (l >= left){ const f = left/(l||1); return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; } left -= l; }
+    return pts.at(-1);
+  };
+  let k1 = behind(s1), k2 = behind(s2);
+  if (Math.hypot(k1[0]-wx, k1[1]-wy) < 6) k1 = [wx - 15, wy + 2];          // at the very start: huddle beside mum
+  if (Math.hypot(k2[0]-k1[0], k2[1]-k1[1]) < 6) k2 = [k1[0] - 15, k1[1] + 1];
+  const ks = Math.min(0.72, Math.max(0.56, 0.56 + pxPerKm/500));
+  if (js && js.kind === "ride") g += `<g id="walker" style="cursor:grab">${rideIcon(wx, wy, js.mode)}</g>`;
+  else if (js || pre) g += `<g pointer-events="none">${squirrel(wx-30, wy+3, ks*0.97, "pack")}${squirrel(wx-16, wy+3, ks, "scarf")}</g><g id="walker" style="cursor:grab">${pin(wx, wy)}</g>`;
+  else {
+    g += `<g pointer-events="none">${squirrel(k1[0]-4, k1[1]+3, ks, "scarf")}${squirrel(k2[0]-4, k2[1]+3, ks*0.97, "pack")}</g>`;
+    g += `<g id="walker" style="cursor:grab">${pin(wx, wy)}</g>`;
+  }
+  if (S.txt === 0) g += LBL;
+  svg.innerHTML = g;
+  WALKER = [wx, wy];
+  renderText(fwd, back);
+}
+
+/* ---------- text panels ---------- */
+function waitQuip(w, weather){
+  if (w == null) return {icon:"❌", txt:"Call your inn 📞"};
+  let r = w <= 10 ? {icon:"✅", txt:"Perfect timing!"} : w <= 30 ? {icon:"✅", txt:"Coffee time ☕"} : w <= 60 ? {icon:"✅", txt:"Dango break 🍡"} : w <= 150 ? {icon:"⏳", txt:"Long wait: café?"} : {icon:"⏳", txt:"Walking may beat it"};
+  if (weather){ r.icon = "🌫️" + r.icon; r.txt += " · fog risk"; }
+  return r;
+}
+const waits = o => o.dep2 != null ? `wait ${dur(o.wait)} / ${dur(o.dep2 - o.arr)}` : `wait ${dur(o.wait)}`;
+function optHTML(isF, o, f){
+  if (isF && o && o.noBus) return `<h3>➡️ Keep going: no ${esc(o.p.hop.mode.split(" ").slice(1).join(" ") || "ride")} left</h3><div><b>${esc(o.p.hop.atName||o.p.name)}</b> · ${o.dist.toFixed(1)} km · ${dur(o.walk)} → arrive ${fmt(o.arr)}</div><div>Its last departure today is at ${fmt(o.p.hop.deps.at(-1))}.</div><div class="fine">${o.p.km >= total(D()) - 1e-6 ? "Missed the planned onward train: phone the inn or Walk Japan." : "Walk on past it, or phone the inn for help."}</div>`;
+  if (!isF && o && o.noBus) return `<h3>↩️ Turn back: no bus left</h3><div>Walking back to <b>${esc(o.p.hop.atName||o.p.name)}</b> takes ${dur(o.walk)} → arrive ${fmt(o.arr)}.</div><div>Its last ${esc(o.p.hop.mode.split(" ").slice(1).join(" ") || "departure")} today is at ${fmt(o.p.hop.deps.at(-1))}.</div><div class="fine">${f && f.noBus ? "Nothing either way now: phone the inn or Walk Japan." : `So keep going${f ? ` to ${esc(f.p.hop.atName||f.p.name)}` : ""}: turning back won't get you a ride.`}</div>`;
+  if (!isF && o && o.off) return `<h3>↩️ Turn back: not worth it</h3><div>Walking on to <b>${esc((f.p.hop.atName||f.p.name))}</b> takes ${dur(f.walk)}.</div><div>Walking back to ${esc(o.p.hop.atName||o.p.name)} would take ${dur(o.walk)}.</div><div class="fine">So keep going: it's quicker 🐿️</div>`;
+  if (!o) return isF ? `<h3>➡️ Keep going</h3><div>No bus or train stop ahead. Nearly there 🎉</div>` : `<h3>↩️ Turn back</h3><div>No bus or train stop behind you yet.</div>`;
+  const h = o.p.hop, q = waitQuip(o.wait, h.weather), here = o.dist < 0.05, name = h.atName || o.p.name, ic = h.mode.split(" ")[0];
+  const last = o.dep != null && o.dep2 == null;
+  const icon = last ? (h.weather ? "🌫️☑️" : "☑️") : q.icon;
+  const then = o.dep == null ? "" : (o.dep2 != null ? `then <b>${fmt(o.dep2)}</b>` : `<b>last one today</b>, don't miss it`);
+  return `<h3>${isF ? (here ? "🚏 You're at a hop-off" : "➡️ Keep going") : "↩️ Turn back"}</h3>
+    <div><b>${esc(name)}</b>${here ? "" : ` · ${o.dist.toFixed(1)} km · ${dur(o.walk)}`} → arrive ${fmt(o.arr)}</div>
+    <div class="big">${icon} ${ic} ${o.dep!=null ? `${fmt(o.dep)} · ${waits(o)}` : "none left today"}</div>
+    <div>${o.dep!=null && h.ride ? `<span class="pill ${isF ? "f" : "b"}">${isF ? "➡️" : "↩️"} ${ic} at ${esc(h.to)} ~${fmt(o.dep + h.ride)}</span> ` : ""}${then}</div>
+    <div class="fine">${esc(h.mode)} → ${esc(h.to)} · ${esc(h.freqNote)}${h.est ? " · ≈ estimate" : ""} · ${q.txt}</div>`;
+}
+const TMIN = 360, TMAX = 1200, pctOf = m => Math.min(Math.max((m - TMIN)/(TMAX - TMIN), 0), 1)*100;
+function renderRail(){
+  const d = D(), st = startOf(d), en = T(d, total(d), S.pace), ss = sunsetOf(d), dk = darkOf(d);
+  $("mkStartT").textContent = d.transfer ? `🏨${fmt(st)} → 🚶${fmt(walkStartOf(d))}` : `🚶${fmt(st)}`;
+  $("mkEndT").textContent = fmt(en); $("mkSunT").textContent = fmt(ss); $("mkDarkT").textContent = fmt(dk);
+  const rw = $("rail").getBoundingClientRect().width || 300;
+  const marks = [["Start", st, "#3d5a99"], ["End", en, "#3b2f2a"], ["Sun", ss, "#e08a12"], ["Dark", dk, "#3d5a99"]];
+  const items = marks.map(([k, m, c]) => {
+    const x = pctOf(m)/100*rw, el = $("mk"+k);
+    $("tk"+k).style.left = x + "px";              // the tick is always exactly at its time
+    el.style.transform = "translateX(-50%)"; el.style.left = x + "px";
+    return {el, x, c, w: el.getBoundingClientRect().width || 40};
+  }).sort((a,b) => a.x - b.x);
+  const gap = 4, pos = items.map(i => i.x);
+  pos[0] = Math.max(pos[0], items[0].w/2 - 8);
+  for (let i=1;i<items.length;i++){ const min = pos[i-1] + items[i-1].w/2 + gap + items[i].w/2; if (pos[i] < min) pos[i] = min; }
+  for (let i=items.length-1;i>=0;i--){ const max = i === items.length-1 ? rw - items[i].w/2 + 8 : pos[i+1] - items[i+1].w/2 - gap - items[i].w/2; if (pos[i] > max) pos[i] = max; }
+  if (pos[0] < items[0].w/2 - 8){            // squeezed off the left edge: slide everyone right, then re-space
+    const dx = items[0].w/2 - 8 - pos[0]; for (let i=0;i<pos.length;i++) pos[i] += dx;
+    for (let i=1;i<items.length;i++){ const min = pos[i-1] + items[i-1].w/2 + gap + items[i].w/2; if (pos[i] < min) pos[i] = min; }
+  }
+  let lines = "";
+  items.forEach((it, i) => {
+    it.el.style.left = pos[i] + "px";
+    if (Math.abs(pos[i] - it.x) > 3) lines += `<path d="M${it.x.toFixed(1)} 6 L${pos[i].toFixed(1)} 9" stroke="${it.c}" stroke-width="1.2" opacity=".7" fill="none"/>`;
+  });
+  $("leaders").innerHTML = lines;
+}
+function renderText(fwd, back){
+  renderRail();
+  const d = D(), pace = S.pace, km = S.km, t = S.t;
+  document.getElementById("timeV").textContent = fmt(t);
+  const pn = pace <= 15 ? "ninja 🥷" : pace <= 22 ? "brisk" : pace <= 30 ? "leisurely 🍵" : pace <= 38 ? "slow & steady" : "snail 🐌";
+  document.getElementById("paceV").innerHTML = `${pace} min/km<span class="pn"> · ${pn}</span>`;
+  const st = Pos(d, t, pace).state;
+  const i = Math.max(0, d.pts.findIndex((p,j) => j < d.pts.length-1 && km <= d.pts[j+1].km + 1e-6)), a = d.pts[i], b = d.pts[Math.min(i+1, d.pts.length-1)];
+  let where;
+  const jsNow = segAt(d, t), jAll = journeyOf(d);
+  const grpOf = g => jAll.filter(x => x.grp === g.grp && !x.done), finOf = g => grpOf(g).at(-1);
+  if (jsNow && jsNow.done) where = `${S.day === "d7" ? "🗼" : "🏨"} <b>${fmt(t)}</b> · ${S.day === "d7" ? "in Tokyo" : "at " + esc(jsNow.to)} since ~${fmt(jsNow.t0)}. ${S.day === "d7" ? "Otsukaresama! 🎉" : "Onsen time ♨️"}`;
+  else if (jsNow){ const fin = finOf(jsNow), ic = jsNow.kind === "wait" ? "⏳" : jsNow.kind === "walk" ? "🚶" : jsNow.mode === "shinkansen" ? "🚅" : jsNow.mode === "train" ? "🚃" : jsNow.mode === "taxi" ? "🚕" : "🚐";
+    where = `${ic} <b>${fmt(t)}</b> · ${esc(jsNow.kind === "ride" ? "on the " + jsNow.label : jsNow.label)}${jsNow.kind === "wait" ? "" : ` · ${esc(jsNow.to)} ~${fmt(jsNow.t1)}`}${fin.t0 !== jsNow.t0 ? ` · ${jsNow.grp === "am" ? "🚶 walk" : "🏁"} ~${fmt(fin.t1)}` : ""}`; }
+  else if (st === "before") where = t < startOf(d) ? `🌅 ${fmt(t)} · at the inn. You leave at ${fmt(startOf(d))}${d.transfer ? `, walking from ~${fmt(walkStartOf(d))}` : ""}.` : `🚐 ${fmt(t)} · on ${d.before || "the way"}. Walking from ~${fmt(walkStartOf(d))}.`;
+  else if (st === "arrived" || km >= total(d) - 0.01) where = `🎉 Arrived at ${esc(d.pts.at(-1).name)} ~${fmt(T(d,total(d),pace))}. Onsen time ♨️`;
+  else if (st === "lunch") where = `🍱 Lunch break at ${km.toFixed(1)} km (${fmt(t)})`;
+  else where = `📍 <b>${km.toFixed(1)}</b>/${total(d)} km · <b>${fmt(t)}</b> · ${esc(a.name)} → ${esc(b.name)}`;
+  document.getElementById("where").innerHTML = where;
+  const badges = [], endT = T(d, total(d), pace);
+  const inPass = d.pts.some((p,j) => j>0 && p.kind==="pass" && km > d.pts[j-1].km + 0.05 && km < (d.pts[j+1]?.km ?? p.km) - 0.05);
+  const zNow = st === "walking" ? zoneAt(d, km, pace) : "go";
+  if (zNow === "back") badges.push(`<span class="badge warn">🟨 No-exit stretch: turning back is the way out</span>`);
+  else if (zNow === "commit") badges.push(`<span class="badge bad">🟧 Past the point of no return: keep going</span>`);
+  else if (zNow === "nobus") badges.push(`<span class="badge bad">🟥 No bus or train left from the nearest stops: keep walking</span>`);
+  const ss = sunsetOf(d), dk = darkOf(d);
+  if (st === "walking" && t > dk) badges.push(`<span class="badge bad">🌙 Dark now: torch on, stay together</span>`);
+  else if (st === "walking" && t > ss) badges.push(`<span class="badge warn">🌇 Twilight: dark by ${fmt(dk)}</span>`);
+  badges.push(endT > dk ? `<span class="badge bad">🌙 Finish ~${fmt(endT)}, after dark</span>` : endT > ss ? `<span class="badge warn">🌇 Finish ~${fmt(endT)}, in twilight</span>` : `<span class="badge">🏁 Finish ~${fmt(endT)}</span>`);
+  if (S.day === "d4" && S.course === "A") badges.push(`<span class="badge bad">⚠️ Nagiso = last exit</span>`);
+  if (S.day === "d6") badges.push(`<span class="badge">🧳 No luggage tonight</span>`);
+  document.getElementById("badges").innerHTML = badges.join("");
+  const preNow = !jsNow && d.transfer && t < startOf(d) ? jAll.filter(g => g.grp === "am") : null;
+  if (preNow){
+    document.getElementById("fwd").innerHTML = `<h3>🏨 At the inn, not left yet</h3><div>Leave ${fmt(startOf(d))} · ${esc(preNow[0].label)}</div><div class="big">🚶 Walk starts at ${esc(preNow.at(-1).to)} ~${fmt(preNow.at(-1).t1)}</div><div>${preNow.length > 1 ? `then ${esc(preNow.at(-1).label)}` : "Boots on after that 🥾"}</div><div class="fine">Drag the ▲ under the time bar to change when you leave.</div>`;
+    document.getElementById("back").innerHTML = `<h3>↩️ Turn back</h3><div>Still at the inn: nothing to turn back from.</div><div class="fine">Get-out options appear once you're walking.</div>`;
+  } else if (jsNow){   // on the planned transport: no walking options, show the plan instead
+    const rest = grpOf(jsNow).filter(g => g.t1 > t && g.kind !== "wait"), nx = rest[0], fin = finOf(jsNow), am = jsNow.grp === "am";
+    document.getElementById("fwd").innerHTML = jsNow.done
+      ? `<h3>🎉 Done for the day</h3><div>Planned trip finished at <b>${esc(jsNow.to)}</b> ~${fmt(jsNow.t0)}.</div><div class="big">${S.day === "d7" ? "🗼 Tokyo!" : "🏨 Check-in, onsen, dinner"}</div><div>Walk finished ~${fmt(T(d,total(d),pace))}</div><div class="fine">Drag the squirrels back onto the path to replay the day.</div>`
+      : `<h3>👨‍👩‍👦 Planned ${am ? "morning transfer" : "trip"}, all together</h3><div>${nx ? `${esc(nx.label)} → ~${fmt(nx.t1)}` : esc(jsNow.label)}</div><div class="big">${am ? "🚶 Walk starts at" : "🏁"} ${esc(fin.to)} ~${fmt(fin.t1)}</div><div>${rest[1] ? `then ${esc(rest[1].label)}` : am ? "Then boots on 🥾" : "Last leg 🎉"}</div><div class="fine">Tour transport, not a get-out. ≈ times are estimates: your Walk Japan notes rule.</div>`;
+    document.getElementById("back").innerHTML = `<h3>↩️ Turn back</h3><div>${jsNow.done ? "Walk done for today." : "Not walking right now: you're on the planned transport."}</div><div class="fine">Drag the squirrels back onto the path to plan a walk.</div>`;
+  } else {
+    document.getElementById("fwd").innerHTML = optHTML(true, fwd);
+    document.getElementById("back").innerHTML = optHTML(false, back, fwd);
+  }
+  document.getElementById("back").classList.toggle("off", !!jsNow || !!preNow || !!(back && back.off));
+  let tip;
+  if (jsNow && jsNow.done) tip = "Yukata on, feet up 🍵. Big day tomorrow?";
+  else if (jsNow) tip = jsNow.kind === "wait" ? "Platform snack time 🍡. Everyone together? Good." : "Window seat squirrels 🐿️🐿️🐿️. Rest those legs.";
+  else if (st === "before") tip = "Morning! Breakfast, bear bells 🔔, then drag me along the route.";
+  else if (back && back.noBus && fwd && fwd.noBus) tip = `No bus or train either way by the time you'd get there. Phone tonight's inn or Walk Japan, and stay together 📞`;
+  else if (back && back.noBus) tip = `Nothing leaves ${back.p.hop.atName||back.p.name} after ${fmt(back.p.hop.deps.at(-1))}, so the only way out is forward. Steady pace, snacks out 🍙`;
+  else if (fwd && back && back.off) tip = "The next stop is closer than the last one, so turning back isn't worth it. Onwards! 💪";
+  else if (fwd && back && fwd.dep != null && back.dep != null && back.p !== fwd.p) tip = fwd.dep <= back.dep ? `Forward catches transport sooner (${fmt(fwd.dep)} vs ${fmt(back.dep)}). Onwards! 💪` : `Turning back catches transport sooner (${fmt(back.dep)} vs ${fmt(fwd.dep)}). A tactical retreat 🐢`;
+  else if (inPass) tip = "Between exits. Stay together and decide at the next stop.";
+  else tip = "Snack check: onigiri 🍙, water 💧, battery 🔋?";
+  document.getElementById("tip").textContent = tip;
+  // timetable sheet
+  document.getElementById("tlTitle").textContent = `${d.chip} · ${d.date} · ${d.title} · at ${pace} min/km`;
+  const tl = d.pts.map(p => { const e = T(d,p.km,pace), cls = p.km < km - 0.05 ? "past" : (Math.abs(p.km-km) < 0.05 ? "here" : "");
+    const nx = p.hop ? (() => { const x = nextDep(p.hop.deps, e); return ` · ${p.hop.mode.split(" ")[0]} next ${x!=null?fmt(x):"none"}`; })() : (p.kind==="pass" ? " · ⛰️ no transport" : "");
+    return `<li class="${cls}"><span class="t">${fmt(e)}</span><span>${esc(p.name)} <span class="fine">(${p.km} km${nx})</span></span></li>`; });
+  const tr = transferOf(d);
+  if (tr) tl.unshift(...tr.legs.map((l, i) => `<li><span class="t">${fmt(i === 0 ? tr.leave : tr.dep)}</span><span>${esc(l.label)}</span></li>`));
+  if (d.lunchKm != null) tl.splice(tr ? tr.legs.length + d.pts.findIndex(p=>p.km>d.lunchKm) : d.pts.findIndex(p=>p.km>d.lunchKm), 0, `<li><span class="t">${fmt(T(d,d.lunchKm,pace))}</span><span>🍱 Lunch until ${fmt(T(d,d.lunchKm,pace)+LUNCH)}</span></li>`);
+  document.getElementById("tl").innerHTML = tl.join("");
+  document.getElementById("tl2").innerHTML = tl.join("");
+  document.getElementById("tlTitle2").textContent = "📋 " + document.getElementById("tlTitle").textContent;
+}
+
+/* ---------- state changes ---------- */
+const $ = id => document.getElementById(id);
+function sync(){ $("time").value = Math.round(S.t); $("pace").value = S.pace; }
+function setFromTime(t){ S.t = t; S.km = Pos(D(), t, S.pace).km; }
+function setFromPos(km){ const d = D(); S.km = Math.min(Math.max(km,0), total(d)); S.t = T(d, S.km, S.pace); }
+function setPace(p){ S.pace = p; const d = D(); if (S.km > 0.01 && S.km < total(d) - 0.01) S.t = T(d, S.km, p); else setFromTime(S.t); }
+$("time").addEventListener("input", e => { setFromTime(+e.target.value); sync(); render(); });
+$("pace").addEventListener("input", e => { setPace(+e.target.value); sync(); render(); });
+
+function drawChips(){
+  $("days").innerHTML = ORDER.map(k => { const d = dayObj(k); return `<button class="chip" data-d="${k}" aria-pressed="${S.day===k}">${d.chip} <small>${d.date.split(" ")[0]}</small></button>`; }).join("");
+  document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+    const from = ORDER.indexOf(S.day), to = ORDER.indexOf(b.dataset.d);
+    S.day = b.dataset.d; $("courseBox").hidden = S.day !== "d4";
+    if (to < from) setFromPos(total(D()));          // going back a day: put us at that day's finish
+    else if (to > from) { S.km = 0; S.t = startOf(D()); }  // going forward: put us at that day's start
+    drawChips(); sync(); render(); }));
+  requestAnimationFrame(() => { const a = $("days").querySelector('[aria-pressed="true"]'); if (a) a.scrollIntoView({block:"nearest", inline:"center"}); chevs(); });
+}
+function chevs(){ const c = $("days"), over = c.scrollWidth > c.clientWidth + 2;
+  $("chL").hidden = !over || c.scrollLeft < 4; $("chR").hidden = !over || c.scrollLeft > c.scrollWidth - c.clientWidth - 4; c.classList.toggle("ovl", over); }
+$("days").addEventListener("scroll", chevs, {passive:true}); addEventListener("resize", chevs);
+$("chL").addEventListener("click", () => $("days").scrollBy({left:-160})); $("chR").addEventListener("click", () => $("days").scrollBy({left:160}));
+document.querySelectorAll("#courseBox button").forEach(b => b.addEventListener("click", () => {
+  S.course = b.dataset.c; document.querySelectorAll("#courseBox button").forEach(x => x.setAttribute("aria-pressed", x===b ? "true":"false"));
+  setFromTime(S.t); render(); }));
+
+/* ---------- gestures: pan, pinch, wheel, drag the squirrels ---------- */
+let WALKER = [0,0], dragOff = 0;
+const ptrs = new Map(); let mode = null, start = null;
+const local = e => { const r = svg.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+function nearestOn(d, p){
+  let best = {dist:Infinity, km:0};
+  for (let i=0;i<d.pts.length-1;i++){
+    const a = scr(d.pts[i].ll), b = scr(d.pts[i+1].ll), vx = b[0]-a[0], vy = b[1]-a[1], l2 = vx*vx+vy*vy || 1;
+    let f = ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/l2; f = Math.max(0, Math.min(1, f));
+    const dd = Math.hypot(p[0]-(a[0]+f*vx), p[1]-(a[1]+f*vy));
+    if (dd < best.dist) best = {dist:dd, km: d.pts[i].km + f*(d.pts[i+1].km - d.pts[i].km)};
+  }
+  return best;
+}
+const SNAP_PX = 45;
+function dragTo(p){
+  const cur = D(), here = nearestOn(cur, p);
+  let pick = {key:null, ...here};
+  // other days (both Day 4 courses) can take over when the finger is clearly nearer to them
+  ["d2","d3","d4B","d4A","d5","d6","d7"].forEach(k => {
+    const d = DAYS[k]; if (d === cur) return;
+    const n = nearestOn(d, p);
+    if (n.dist < SNAP_PX && n.dist + 8 < pick.dist) pick = {key:k, ...n};
+  });
+  if (pick.key){
+    if (pick.key.startsWith("d4")){ S.day = "d4"; S.course = pick.key.slice(2); }
+    else S.day = pick.key;
+    $("courseBox").hidden = S.day !== "d4";
+    document.querySelectorAll("#courseBox button").forEach(x => x.setAttribute("aria-pressed", x.dataset.c === S.course ? "true":"false"));
+    drawChips();
+  }
+  setFromPos(pick.km);
+}
+svg.addEventListener("pointerdown", e => {
+  svg.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, local(e));
+  if (ptrs.size === 1){
+    const p = local(e);
+    if (Math.hypot(p[0]-WALKER[0], p[1]-(WALKER[1]-30)) < 26 || Math.hypot(p[0]-WALKER[0], p[1]-(WALKER[1]-16)) < 24){ mode = "drag"; dragOff = WALKER[1] - p[1]; $("hint").style.opacity = 0; }
+    else { mode = "pan"; start = {p, tx:V.tx, ty:V.ty}; svg.style.cursor = "grabbing"; }
+  } else if (ptrs.size === 2){
+    const [a,b] = [...ptrs.values()]; mode = "pinch";
+    start = {d: Math.hypot(a[0]-b[0], a[1]-b[1]), m:[(a[0]+b[0])/2,(a[1]+b[1])/2], k:V.k, tx:V.tx, ty:V.ty};
+  }
+});
+svg.addEventListener("pointermove", e => {
+  if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, local(e));
+  if (mode === "drag"){ dragTo([local(e)[0], local(e)[1] + dragOff]); sync(); render(); }
+  else if (mode === "pan" && ptrs.size === 1){ const p = local(e); V.tx = start.tx + p[0]-start.p[0]; V.ty = start.ty + p[1]-start.p[1]; clampView(); render(); }
+  else if (mode === "pinch" && ptrs.size === 2){
+    const [a,b] = [...ptrs.values()], dd = Math.hypot(a[0]-b[0], a[1]-b[1]), m = [(a[0]+b[0])/2,(a[1]+b[1])/2];
+    const k = Math.min(Math.max(start.k * dd/start.d, K_MIN), K_MAX);
+    const wx = (start.m[0]-start.tx)/start.k, wy = (start.m[1]-start.ty)/start.k;
+    V.k = k; V.tx = m[0] - wx*k; V.ty = m[1] - wy*k; clampView(); render();
+  }
+});
+const end = e => { ptrs.delete(e.pointerId); if (ptrs.size === 0){ mode = null; svg.style.cursor = "grab"; } else if (ptrs.size === 1){ const p = [...ptrs.values()][0]; mode = "pan"; start = {p, tx:V.tx, ty:V.ty}; } };
+svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+svg.addEventListener("wheel", e => { e.preventDefault(); zoomAt(local(e), Math.exp(-e.deltaY*0.0015)); }, {passive:false});
+function zoomAt(p, f){ const k = Math.min(Math.max(V.k*f, K_MIN), K_MAX), wx = (p[0]-V.tx)/V.k, wy = (p[1]-V.ty)/V.k; V.k = k; V.tx = p[0]-wx*k; V.ty = p[1]-wy*k; clampView(); render(); }
+$("zin").onclick = () => zoomAt([W/2,H/2], 1.5);
+const TXT_STATES = [["👁️","shown"], ["🙈","hidden"], ["🌫️","faded to 50%"]];
+function txtButtons(){ const [ic, nm] = TXT_STATES[S.txt]; $("ztxt").textContent = ic; $("ztxt").setAttribute("aria-label", `Map text: ${nm}`); $("ztxt").title = `Map text: ${nm} (tap: shown → hidden → faded)`;
+  const pc = Math.round(S.txtScale*100); $("zsize").textContent = pc + "%"; $("zsize").style.fontSize = "10.5px";
+  $("zsize").setAttribute("aria-label", `Map text size: ${pc}% (tap: 50 → 75 → 100%)`); $("zsize").title = `Map text size: ${pc}% (tap: 50 → 75 → 100%)`;
+  const lg = $("legend"); lg.style.display = S.txt === 1 ? "none" : ""; lg.style.opacity = S.txt === 2 ? ".5" : ""; lg.style.fontSize = S.txtScale < 1 ? (S.txtScale < .6 ? "8px" : "9.5px") : ""; }
+$("ztxt").onclick = () => { S.txt = (S.txt + 1) % 3; txtButtons(); render(); };
+$("zsize").onclick = () => { S.txtScale = S.txtScale < .6 ? .75 : S.txtScale < .9 ? 1 : .5; txtButtons(); render(); };
+$("zout").onclick = () => zoomAt([W/2,H/2], 1/1.5);
+$("zday").onclick = () => { fitDay(); render(); };
+$("ztrip").onclick = () => { fitTrip(); render(); };
+$("tlBtn").onclick = () => { $("tlSheet").hidden = false; };
+$("infoBtn").onclick = () => { $("infoSheet").hidden = false; };
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => { $(b.dataset.close).hidden = true; });
+
+/* start-time arrow */
+(() => {
+  const mk = $("mkStart"), rail = $("rail"), tk = $("tkStart"); let on = false;
+  const toMin = x => { const r = rail.getBoundingClientRect(); return Math.round((TMIN + (x - r.left)/r.width*(TMAX-TMIN))/5)*5; };
+  mk.addEventListener("pointerdown", e => { on = true; mk.setPointerCapture(e.pointerId); e.preventDefault(); });
+  tk.style.pointerEvents = "auto"; tk.style.cursor = "ew-resize";
+  tk.addEventListener("pointerdown", e => { on = true; mk.setPointerCapture(e.pointerId); e.preventDefault(); });
+  mk.addEventListener("pointermove", e => { if (!on) return;
+    const d = D(), v = Math.min(Math.max(toMin(e.clientX), hm("5:00")), hm("12:00"));
+    S.starts[d.key] = v; delete S.walkOver[d.key];
+    if (S.km > 0.01) S.t = T(d, S.km, S.pace); else setFromTime(Math.max(S.t, v));
+    sync(); render(); });
+  const up = () => on = false; mk.addEventListener("pointerup", up); mk.addEventListener("pointercancel", up);
+})();
+/* "I'm here at…": keep the squirrels where they are, make the clock match, and work out when we must have started */
+function hereAt(X){
+  const d = D(), km = S.km, X1 = Math.min(Math.max(X, TMIN), TMAX);
+  const W = X1 - walkBetween(d, 0, km, S.pace) - (d.lunchKm != null && km > d.lunchKm + 1e-9 ? LUNCH : 0) - (km < 0.01 ? 1 : 0);   // at the start: just set off
+  const tr = d.transfer, lead = tr ? tr.mins + (tr.ride ? tr.ride + 7 : 0) : 0;   // usual inn → walk-start transfer time
+  S.starts[d.key] = Math.round(W - lead); S.walkOver[d.key] = W;
+  S.t = X1; S.km = Pos(d, X1, S.pace).km; sync(); render();
+}
+(() => { const sel = $("hereAt");
+  const nowMin = () => { const n = new Date(); return n.getHours()*60 + n.getMinutes(); };
+  const fill = () => { const opts = [`<option value="" selected>📍 I'm here…</option>`, `<option value="now">Now · ${fmt(nowMin())}</option>`];
+    for (let m = TMIN; m <= TMAX; m += 15) opts.push(`<option value="${m}">${fmt(m)}</option>`); sel.innerHTML = opts.join(""); };
+  fill(); ["focus", "pointerdown", "mousedown"].forEach(ev => sel.addEventListener(ev, e => { e.stopPropagation(); if (ev === "focus") fill(); }));
+  sel.addEventListener("click", e => { e.stopPropagation(); e.preventDefault && 0; });
+  sel.addEventListener("change", () => { const v = sel.value; if (!v) return; hereAt(v === "now" ? nowMin() : +v); sel.value = ""; sel.blur(); });
+})();
+/* ---------- start ---------- */
+let rz, started = false;
+new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => {
+  if (!started) return;
+  const cx = unscr([W/2, H/2]), rel = V.k / K_MIN;
+  sizeMap(); V.k = rel * K_MIN; V.tx = W/2 - cx[0]*V.k; V.ty = H/2 - cx[1]*V.k; clampView(); render();
+}, 60); }).observe(wrap);
+txtButtons(); setFromTime(hm("10:30")); drawChips(); sync(); sizeMap(); fitDay(); render();
+const hint = $("hint"); hint.style.left = WALKER[0] + "px"; hint.style.top = (WALKER[1] - 52) + "px";
+setTimeout(() => hint.style.opacity = 0, 4500);
+started = true;
+</script>
+</body>
+</html>

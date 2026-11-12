@@ -1,0 +1,1261 @@
+{
+ "d2": {
+  "chip": "Day 2",
+  "date": "Sat 14 Nov",
+  "title": "Ena → Nakatsugawa → Magome",
+  "start": 420,
+  "walkStart": 420,
+  "lunchKm": 12,
+  "transfer": null,
+  "zones": [
+   {
+    "a": 0,
+    "b": 12,
+    "z": "go"
+   },
+   {
+    "a": 12,
+    "b": 15,
+    "z": "go"
+   },
+   {
+    "a": 15,
+    "b": 16.765476190475056,
+    "z": "back"
+   },
+   {
+    "a": 16.765476190475056,
+    "b": 18,
+    "z": "commit"
+   }
+  ],
+  "journey": [],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Ena",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.4551,
+     137.4082
+    ],
+    "note": null,
+    "eta": 420,
+    "hop": {
+     "mode": "🚃 train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Nakatsugawa",
+     "deps": [
+      360,
+      390,
+      420,
+      450,
+      480,
+      510,
+      540,
+      570,
+      600,
+      630,
+      660,
+      690,
+      720,
+      750,
+      780,
+      810,
+      840,
+      870,
+      900,
+      930,
+      960,
+      990,
+      1020,
+      1050,
+      1080,
+      1110,
+      1140,
+      1170,
+      1200,
+      1230,
+      1260,
+      1290
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   },
+   {
+    "km": 12,
+    "name": "Nakatsugawa Stn",
+    "kind": "stop",
+    "up": 150,
+    "down": 120,
+    "ll": [
+     35.5005,
+     137.5031
+    ],
+    "note": null,
+    "eta": 802.5,
+    "hop": {
+     "mode": "🚌 Kitaena bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Magome",
+     "deps": [
+      495,
+      550,
+      595,
+      645,
+      675,
+      735,
+      795,
+      855,
+      915,
+      975,
+      1065
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 15,
+    "name": "Ochiai-juku",
+    "kind": "stop",
+    "up": 60,
+    "down": 20,
+    "ll": [
+     35.5117,
+     137.5312
+    ],
+    "note": null,
+    "eta": 946.5,
+    "hop": {
+     "mode": "🚌 bus (Ochiai stop)",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Magome",
+     "deps": [
+      507,
+      562,
+      607,
+      657,
+      687,
+      747,
+      807,
+      867,
+      927,
+      987,
+      1077
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   },
+   {
+    "km": 16.3,
+    "name": "Stone-paved path",
+    "kind": "pass",
+    "up": 80,
+    "down": 0,
+    "ll": [
+     35.5144,
+     137.5487
+    ],
+    "note": null,
+    "eta": 997.5,
+    "hop": null
+   },
+   {
+    "km": 18,
+    "name": "Magome",
+    "kind": "end",
+    "up": 150,
+    "down": 10,
+    "ll": [
+     35.5249,
+     137.5649
+    ],
+    "note": null,
+    "eta": 1071,
+    "hop": null
+   }
+  ]
+ },
+ "d3": {
+  "chip": "Day 3",
+  "date": "Sun 15 Nov",
+  "title": "Magome → O-Tsumago",
+  "start": 420,
+  "walkStart": 420,
+  "lunchKm": null,
+  "transfer": null,
+  "zones": [
+   {
+    "a": 0,
+    "b": 3,
+    "z": "go"
+   },
+   {
+    "a": 3,
+    "b": 5.5,
+    "z": "go"
+   },
+   {
+    "a": 5.5,
+    "b": 6.5,
+    "z": "go"
+   }
+  ],
+  "journey": [],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Magome bus stop",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.5249,
+     137.5649
+    ],
+    "note": null,
+    "eta": 420,
+    "hop": {
+     "mode": "🚌 Ontake bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Otsumago",
+     "deps": [
+      655,
+      805,
+      900,
+      1035
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 3,
+    "name": "Magome Pass",
+    "kind": "stop",
+    "up": 230,
+    "down": 20,
+    "ll": [
+     35.5391,
+     137.5846
+    ],
+    "note": null,
+    "eta": 544.5,
+    "hop": {
+     "mode": "🚌 Ontake bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Otsumago",
+     "deps": [
+      666,
+      816,
+      911,
+      1046
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 5.5,
+    "name": "Odaki/Medaki Falls",
+    "kind": "stop",
+    "up": 10,
+    "down": 230,
+    "ll": [
+     35.5546,
+     137.5889
+    ],
+    "note": null,
+    "eta": 621,
+    "hop": {
+     "mode": "🚌 Ontake bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Otsumago",
+     "deps": [
+      671,
+      821,
+      916,
+      1051
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 6.5,
+    "name": "Otsumago",
+    "kind": "end",
+    "up": 20,
+    "down": 60,
+    "ll": [
+     35.5647,
+     137.593
+    ],
+    "note": null,
+    "eta": 654,
+    "hop": null
+   }
+  ]
+ },
+ "d4B": {
+  "chip": "Day 4",
+  "date": "Mon 16 Nov",
+  "title": "O-Tsumago → Nagiso (Course B)",
+  "start": 420,
+  "walkStart": 420,
+  "lunchKm": null,
+  "transfer": null,
+  "zones": [
+   {
+    "a": 0,
+    "b": 2,
+    "z": "go"
+   },
+   {
+    "a": 2,
+    "b": 8,
+    "z": "go"
+   }
+  ],
+  "journey": [
+   {
+    "t0": 676.05,
+    "t1": 739,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Nagiso Stn for the 12:19 train",
+    "to": "Nagiso Stn"
+   },
+   {
+    "t0": 739,
+    "t1": 789,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "12:19 train to Kiso-Fukushima",
+    "to": "Kiso-Fukushima"
+   },
+   {
+    "t0": 789,
+    "t1": 794,
+    "kind": "walk",
+    "grp": "pm",
+    "label": "walking to Iwaya Inn",
+    "to": "Iwaya Inn"
+   }
+  ],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Otsumago bus stop",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.5647,
+     137.593
+    ],
+    "note": null,
+    "eta": 420,
+    "hop": {
+     "mode": "🚌 bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Nagiso Stn",
+     "deps": [
+      676,
+      826,
+      921,
+      1056
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 2,
+    "name": "Tsumago",
+    "kind": "stop",
+    "up": 20,
+    "down": 40,
+    "ll": [
+     35.579,
+     137.595
+    ],
+    "note": null,
+    "eta": 483,
+    "hop": {
+     "mode": "🚌 bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Nagiso Stn",
+     "deps": [
+      459,
+      584,
+      590,
+      640,
+      681,
+      704,
+      710,
+      780,
+      804,
+      830,
+      926,
+      940,
+      970,
+      974,
+      1061
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 8,
+    "name": "Nagiso Stn",
+    "kind": "end",
+    "up": 87,
+    "down": 120,
+    "ll": [
+     35.5988,
+     137.6084
+    ],
+    "note": null,
+    "eta": 676.05,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Kiso-Fukushima",
+     "deps": [
+      382,
+      422,
+      480,
+      491,
+      619,
+      660,
+      739,
+      874,
+      960,
+      1036,
+      1096,
+      1219,
+      1243,
+      1309
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   }
+  ]
+ },
+ "d4A": {
+  "chip": "Day 4",
+  "date": "Mon 16 Nov",
+  "title": "O-Tsumago → Nenoue Pass → Nojiri (Course A)",
+  "start": 420,
+  "walkStart": 420,
+  "lunchKm": 14,
+  "transfer": null,
+  "zones": [
+   {
+    "a": 0,
+    "b": 2,
+    "z": "go"
+   },
+   {
+    "a": 2,
+    "b": 8,
+    "z": "go"
+   },
+   {
+    "a": 8,
+    "b": 15.301204819264058,
+    "z": "back"
+   },
+   {
+    "a": 15.301204819264058,
+    "b": 23,
+    "z": "commit"
+   }
+  ],
+  "journey": [
+   {
+    "t0": 1261.05,
+    "t1": 1322,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Nojiri Stn for the 22:02 train",
+    "to": "Nojiri Stn"
+   },
+   {
+    "t0": 1322,
+    "t1": 1362,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "22:02 train to Kiso-Fukushima (≈)",
+    "to": "Kiso-Fukushima"
+   },
+   {
+    "t0": 1362,
+    "t1": 1367,
+    "kind": "walk",
+    "grp": "pm",
+    "label": "walking to Iwaya Inn",
+    "to": "Iwaya Inn"
+   }
+  ],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Otsumago bus stop",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.5647,
+     137.593
+    ],
+    "note": null,
+    "eta": 420,
+    "hop": {
+     "mode": "🚌 bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Nagiso Stn",
+     "deps": [
+      676,
+      826,
+      921,
+      1056
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 2,
+    "name": "Tsumago",
+    "kind": "stop",
+    "up": 20,
+    "down": 40,
+    "ll": [
+     35.579,
+     137.595
+    ],
+    "note": null,
+    "eta": 483,
+    "hop": {
+     "mode": "🚌 bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Nagiso Stn",
+     "deps": [
+      459,
+      584,
+      590,
+      640,
+      681,
+      704,
+      710,
+      780,
+      804,
+      830,
+      926,
+      940,
+      970,
+      974,
+      1061
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 8,
+    "name": "Nagiso Stn (last exit)",
+    "kind": "stop",
+    "up": 87,
+    "down": 120,
+    "ll": [
+     35.5988,
+     137.6084
+    ],
+    "note": null,
+    "eta": 676.05,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Kiso-Fukushima",
+     "deps": [
+      382,
+      422,
+      480,
+      491,
+      619,
+      660,
+      739,
+      874,
+      960,
+      1036,
+      1096,
+      1219,
+      1243,
+      1309
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 14,
+    "name": "≈ Nenoue Pass",
+    "kind": "pass",
+    "up": 550,
+    "down": 50,
+    "ll": [
+     35.638,
+     137.6
+    ],
+    "note": null,
+    "eta": 938.55,
+    "hop": null
+   },
+   {
+    "km": 23,
+    "name": "Nojiri Stn",
+    "kind": "end",
+    "up": 50,
+    "down": 500,
+    "ll": [
+     35.673,
+     137.6362
+    ],
+    "note": null,
+    "eta": 1261.05,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Kiso-Fukushima",
+     "deps": [
+      395,
+      435,
+      504,
+      632,
+      752,
+      887,
+      1049,
+      1109,
+      1232,
+      1322
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   }
+  ]
+ },
+ "d5": {
+  "chip": "Day 5",
+  "date": "Tue 17 Nov",
+  "title": "Karasawa Falls → Kaida Plateau",
+  "start": 420,
+  "walkStart": 445,
+  "lunchKm": 6,
+  "transfer": {
+   "legs": [
+    "🚕 tour taxi 7:00 → falls ~7:25 (≈)"
+   ],
+   "leave": 420,
+   "arrive": 445
+  },
+  "zones": [
+   {
+    "a": 0,
+    "b": 3.1111111111094942,
+    "z": "back"
+   },
+   {
+    "a": 3.1111111111094942,
+    "b": 6,
+    "z": "commit"
+   },
+   {
+    "a": 6,
+    "b": 9,
+    "z": "go"
+   },
+   {
+    "a": 9,
+    "b": 11.02083333333212,
+    "z": "back"
+   },
+   {
+    "a": 11.02083333333212,
+    "b": 13,
+    "z": "commit"
+   }
+  ],
+  "journey": [
+   {
+    "t0": 420,
+    "t1": 445,
+    "kind": "ride",
+    "grp": "am",
+    "label": "tour taxi to Karasawa Falls (≈)",
+    "to": "Karasawa Falls"
+   }
+  ],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Karasawa Falls",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.9131,
+     137.6498
+    ],
+    "note": null,
+    "eta": 445,
+    "hop": null
+   },
+   {
+    "km": 3.5,
+    "name": "≈ Jizo Pass",
+    "kind": "pass",
+    "up": 400,
+    "down": 0,
+    "ll": [
+     35.927,
+     137.638
+    ],
+    "note": null,
+    "eta": 610,
+    "hop": null
+   },
+   {
+    "km": 6,
+    "name": "Kaida Info Centre",
+    "kind": "stop",
+    "up": 0,
+    "down": 200,
+    "ll": [
+     35.938,
+     137.6317
+    ],
+    "note": null,
+    "eta": 685,
+    "hop": {
+     "mode": "🚌 Kaida bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Yamakanoyu",
+     "deps": [
+      510,
+      611,
+      676,
+      748,
+      796,
+      863,
+      924,
+      1005,
+      1068,
+      1131,
+      1216
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   },
+   {
+    "km": 9,
+    "name": "Kaida Shisho",
+    "kind": "stop",
+    "up": 30,
+    "down": 30,
+    "ll": [
+     35.9407,
+     137.6003
+    ],
+    "note": null,
+    "eta": 824.5,
+    "hop": {
+     "mode": "🚌 Kaida bus",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Yamakanoyu",
+     "deps": [
+      516,
+      617,
+      682,
+      754,
+      802,
+      869,
+      930,
+      1011,
+      1074,
+      1137,
+      1222
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 11,
+    "name": "≈ Nishino Pass",
+    "kind": "pass",
+    "up": 200,
+    "down": 0,
+    "ll": [
+     35.952,
+     137.596
+    ],
+    "note": null,
+    "eta": 914.5,
+    "hop": null
+   },
+   {
+    "km": 13,
+    "name": "Yamakanoyu",
+    "kind": "end",
+    "up": 10,
+    "down": 150,
+    "ll": [
+     35.9584,
+     137.5841
+    ],
+    "note": null,
+    "eta": 976,
+    "hop": null
+   }
+  ]
+ },
+ "d6": {
+  "chip": "Day 6",
+  "date": "Wed 18 Nov",
+  "title": "Yabuhara → Torii Pass → Narai",
+  "start": 420,
+  "walkStart": 492,
+  "lunchKm": null,
+  "transfer": {
+   "legs": [
+    "🚐 tour vehicle 7:00 → station ~7:45 (≈)",
+    "🚃 train 7:52 → Yabuhara ~8:12 (≈ · wait 7 min)"
+   ],
+   "leave": 420,
+   "arrive": 492
+  },
+  "zones": [
+   {
+    "a": 0,
+    "b": 4.4831932773058725,
+    "z": "back"
+   },
+   {
+    "a": 4.4831932773058725,
+    "b": 9,
+    "z": "commit"
+   }
+  ],
+  "journey": [
+   {
+    "t0": 420,
+    "t1": 465,
+    "kind": "ride",
+    "grp": "am",
+    "label": "tour vehicle to Kiso-Fukushima Stn (≈)",
+    "to": "Kiso-Fukushima Stn"
+   },
+   {
+    "t0": 465,
+    "t1": 472,
+    "kind": "wait",
+    "grp": "am",
+    "label": "waiting at Kiso-Fukushima for the 7:52 train",
+    "to": "Kiso-Fukushima Stn"
+   },
+   {
+    "t0": 472,
+    "t1": 492,
+    "kind": "ride",
+    "grp": "am",
+    "label": "7:52 train to Yabuhara (≈)",
+    "to": "Yabuhara"
+   },
+   {
+    "t0": 814.5,
+    "t1": 815,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Narai Stn for the 13:35 train",
+    "to": "Narai Stn"
+   },
+   {
+    "t0": 815,
+    "t1": 840,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "13:35 train to Shiojiri (≈)",
+    "to": "Shiojiri"
+   },
+   {
+    "t0": 840,
+    "t1": 855,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Shiojiri for the 14:15 Shinano express",
+    "to": "Shiojiri"
+   },
+   {
+    "t0": 855,
+    "t1": 905,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "14:15 Shinano express to Nagano (≈)",
+    "to": "Nagano"
+   },
+   {
+    "t0": 905,
+    "t1": 915,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Nagano for the 15:15 shinkansen",
+    "to": "Nagano"
+   },
+   {
+    "t0": 915,
+    "t1": 945,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "15:15 shinkansen to Karuizawa (≈)",
+    "to": "Karuizawa"
+   },
+   {
+    "t0": 945,
+    "t1": 960,
+    "kind": "walk",
+    "grp": "pm",
+    "label": "walking to Le Grand Kyu",
+    "to": "Le Grand Kyu"
+   }
+  ],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Yabuhara Stn",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     35.9302,
+     137.7845
+    ],
+    "note": null,
+    "eta": 492,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Narai",
+     "deps": [
+      452,
+      492,
+      561,
+      689,
+      809,
+      944,
+      1106,
+      1166,
+      1289
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   },
+   {
+    "km": 4,
+    "name": "≈ Torii Pass",
+    "kind": "pass",
+    "up": 300,
+    "down": 20,
+    "ll": [
+     35.948,
+     137.797
+    ],
+    "note": null,
+    "eta": 657,
+    "hop": null
+   },
+   {
+    "km": 9,
+    "name": "Narai Stn",
+    "kind": "end",
+    "up": 50,
+    "down": 330,
+    "ll": [
+     35.9691,
+     137.8156
+    ],
+    "note": null,
+    "eta": 814.5,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Shiojiri",
+     "deps": [
+      458,
+      498,
+      567,
+      695,
+      815,
+      950,
+      1112,
+      1172,
+      1295
+     ],
+     "note": null,
+     "est": true,
+     "wx": false
+    }
+   }
+  ]
+ },
+ "d7": {
+  "chip": "Day 7",
+  "date": "Thu 19 Nov",
+  "title": "Karuizawa → Usui Pass → Yokokawa",
+  "start": 420,
+  "walkStart": 420,
+  "lunchKm": 9,
+  "transfer": null,
+  "zones": [
+   {
+    "a": 0,
+    "b": 4,
+    "z": "go"
+   },
+   {
+    "a": 4,
+    "b": 9.04484304932339,
+    "z": "back"
+   },
+   {
+    "a": 9.04484304932339,
+    "b": 16,
+    "z": "commit"
+   }
+  ],
+  "journey": [
+   {
+    "t0": 997.5,
+    "t1": 1041,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Yokokawa Stn for the 17:21 train",
+    "to": "Yokokawa Stn"
+   },
+   {
+    "t0": 1041,
+    "t1": 1074,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "17:21 train to Takasaki",
+    "to": "Takasaki"
+   },
+   {
+    "t0": 1074,
+    "t1": 1084,
+    "kind": "wait",
+    "grp": "pm",
+    "label": "waiting at Takasaki for the 18:04 shinkansen",
+    "to": "Takasaki"
+   },
+   {
+    "t0": 1084,
+    "t1": 1134,
+    "kind": "ride",
+    "grp": "pm",
+    "label": "18:04 shinkansen to Tokyo (≈)",
+    "to": "Tokyo"
+   }
+  ],
+  "pts": [
+   {
+    "km": 0,
+    "name": "Le Grand Kyu",
+    "kind": "stop",
+    "up": 0,
+    "down": 0,
+    "ll": [
+     36.3528,
+     138.6346
+    ],
+    "note": null,
+    "eta": 420,
+    "hop": {
+     "mode": "🚌 Usui line bus",
+     "atName": "Karuizawa Stn",
+     "at": [
+      36.3426,
+      138.6353
+     ],
+     "extraKm": 1,
+     "to": "Yokokawa",
+     "deps": [
+      419,
+      560,
+      665,
+      775,
+      860,
+      935,
+      990,
+      1085
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 4,
+    "name": "Usui Pass",
+    "kind": "stop",
+    "up": 250,
+    "down": 10,
+    "ll": [
+     36.3698,
+     138.6562
+    ],
+    "note": null,
+    "eta": 577.5,
+    "hop": {
+     "mode": "🚌 Aka Bus (down)",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Kyu-Karuizawa",
+     "deps": [
+      610,
+      660,
+      705,
+      765,
+      840
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   },
+   {
+    "km": 13,
+    "name": "≈ Sakamoto-juku",
+    "kind": "pass",
+    "up": 80,
+    "down": 780,
+    "ll": [
+     36.34,
+     138.715
+    ],
+    "note": null,
+    "eta": 904.5,
+    "hop": null
+   },
+   {
+    "km": 16,
+    "name": "Yokokawa Stn",
+    "kind": "end",
+    "up": 20,
+    "down": 80,
+    "ll": [
+     36.3363,
+     138.737
+    ],
+    "note": null,
+    "eta": 997.5,
+    "hop": {
+     "mode": "🚃 JR train",
+     "atName": null,
+     "at": null,
+     "extraKm": 0,
+     "to": "Takasaki",
+     "deps": [
+      318,
+      370,
+      403,
+      430,
+      456,
+      490,
+      523,
+      568,
+      610,
+      670,
+      724,
+      784,
+      850,
+      910,
+      960,
+      990,
+      1041,
+      1093,
+      1130,
+      1172,
+      1219,
+      1302
+     ],
+     "note": null,
+     "est": false,
+     "wx": false
+    }
+   }
+  ]
+ }
+}

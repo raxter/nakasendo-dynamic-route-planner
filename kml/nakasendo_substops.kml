@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Nakasendo – Sub-stops (bus/train points)</name>
+
+    <!-- DAY 2 -->
+    <Placemark>
+      <name>D2.0 Ena Station</name>
+      <description>Day 2 start option. JR Chuo Line train Ena → Nakatsugawa, about 10 min. Skips the first ~12 km.</description>
+      <Point><coordinates>137.408164,35.4550961,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D2.1 Nakatsugawa Station (~12 km in)</name>
+      <description>Day 2. Kitaena bus to Magome, 25 min, 800 yen, cash. Weekend buses roughly hourly 8:15–17:45. Lunch and supermarket here.</description>
+      <Point><coordinates>137.5031352,35.5004945,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D2.2 Ochiai-juku (~15 km in, approx.)</name>
+      <description>Day 2. Ochiai bus stop is on the same Nakatsugawa → Magome bus line. Last bail-out before the stone-paved forest climb to Magome.</description>
+      <Point><coordinates>137.5311547,35.511703,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D2.3 / D3.0 Magome bus stop</name>
+      <description>Day 2 end, Day 3 start. Bus Magome → Otsumago → Tsumago → Nagiso. 2026 departures from Magome: 10:55, 13:25, 15:00, 17:15.</description>
+      <Point><coordinates>137.5648672,35.5248932,0</coordinates></Point>
+    </Placemark>
+
+    <!-- DAY 3 -->
+    <Placemark>
+      <name>D3.1 Magome Toge bus stop (~3 km in, approx.)</name>
+      <description>Day 3. Top of Magome Pass. Same Magome → Nagiso bus line stops here, about 10–15 min after leaving Magome.</description>
+      <Point><coordinates>137.584608,35.539079,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D3.2 Odaki/Medaki Falls (~5.5 km in, approx.)</name>
+      <description>Day 3. Odarudaki bus stop on the same line is near here.</description>
+      <Point><coordinates>137.5889153,35.5546314,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D3.3 / D4.0 Otsumago bus stop (Maruya Inn)</name>
+      <description>Day 3 end, Day 4 start. Bus on to Tsumago and Nagiso Station.</description>
+      <Point><coordinates>137.592957,35.564724,0</coordinates></Point>
+    </Placemark>
+
+    <!-- DAY 4 -->
+    <Placemark>
+      <name>D4.1 Tsumago bus stop (~2 km in)</name>
+      <description>Day 4. Buses to Nagiso Station, about 9 min, 300 yen. Many departures through the day.</description>
+      <Point><coordinates>137.5949657,35.5790244,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D4.2 Nagiso Station (~8 km in)</name>
+      <description>Day 4. JR train to Kiso-Fukushima (this is the tour's Course B). No IC cards at this station: cash/paper tickets.</description>
+      <Point><coordinates>137.6084065,35.5988443,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D4.3 Nojiri Station (Course A, ~23 km)</name>
+      <description>Day 4 Course A end. JR train to Kiso-Fukushima. No bail-out points listed over Nenoue Pass, so the less-mobile walker should take Course B.</description>
+      <Point><coordinates>137.636199,35.6729624,0</coordinates></Point>
+    </Placemark>
+
+    <!-- DAY 5 -->
+    <Placemark>
+      <name>D5.0 Kiso-Fukushima Station</name>
+      <description>Day 5 start. Ontake Kotsu Kaida Kogen line bus to "Yamaka Ryokan-mae" (right at the inn), about 1 hr. You may need to change buses at Kaida Shisho.</description>
+      <Point><coordinates>137.6933476,35.8440023,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D5.1 Karasawa Falls (0 km, taxi drop)</name>
+      <description>Day 5. The tour's reserved taxi drops you here. No bus here: from here it is walk only, over Jizo Pass (~6 km).</description>
+      <Point><coordinates>137.6498313,35.9130586,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D5.2 Kaida Kogen Tourist Info Center (~6 km in)</name>
+      <description>Day 5. End of the Jizo Pass walk. Buses run from here. The itinerary offers a bus to the inn as an alternative to the Nishino Pass walk.</description>
+      <Point><coordinates>137.6316799,35.9379712,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D5.3 Kaida Shisho bus stop (start of Nishino Pass walk)</name>
+      <description>Day 5. Bus transfer point. Buses toward Nishino / Yamaka Ryokan-mae. The Nishino Pass walk (~4 km, steep) starts here.</description>
+      <Point><coordinates>137.6003446,35.9406619,0</coordinates></Point>
+    </Placemark>
+
+    <!-- DAY 6 -->
+    <Placemark>
+      <name>D6.0 Yabuhara Station (0 km)</name>
+      <description>Day 6 walk start, after the tour's reserved vehicle and train. Alternative: stay on the train one stop to Narai. No IC cards: buy paper tickets.</description>
+      <Point><coordinates>137.7844614,35.9302284,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D6.1 Narai Station (~9 km)</name>
+      <description>Day 6 walk end (after Torii Pass, which has no transport). Train on to Karuizawa via the shinkansen. Staffed ticket window, cash.</description>
+      <Point><coordinates>137.8155605,35.969107,0</coordinates></Point>
+    </Placemark>
+
+    <!-- DAY 7 -->
+    <Placemark>
+      <name>D7.0 Karuizawa Station</name>
+      <description>Day 7. JR Bus Kanto Usui line to Yokokawa Station, about 34 min, 7 a day, 520 yen cash (no IC cards). Or shinkansen to Tokyo, about 1 hr.</description>
+      <Point><coordinates>138.6353268,36.3426254,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D7.1 Kumano Kotai Shrine / Usui Pass (~4 km in, approx.)</name>
+      <description>Day 7. Top of the pass. The seasonal "Aka Bus" runs from Kyu-Karuizawa to the Usui Pass lookout late April to late November: check it is still running on Nov 19. After this, the ~12 km descent to Yokokawa has no transport.</description>
+      <Point><coordinates>138.6561863,36.3697512,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>D7.2 Yokokawa Station (~16 km, walk end)</name>
+      <description>Day 7 walk end. JR Shin'etsu line to Takasaki, then onward to Tokyo. Meeting point if the less-mobile walker took the Usui line bus.</description>
+      <Point><coordinates>138.737046,36.3363317,0</coordinates></Point>
+    </Placemark>
+  </Document>
+</kml>
