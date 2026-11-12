@@ -109,6 +109,8 @@
   .pill{display:inline-block;border:1.5px solid;border-radius:999px;padding:0 7px;font-weight:700;font-size:12px;background:#fffdf8;line-height:1.35}
   .pill.f{color:#2e8b3e;border-color:#2e8b3e}
   .pill.b{color:#c0700a;border-color:#e08a12}
+  .pill.s{color:#6a4c97;border-color:#7b5ea7}
+  .opt.skip{background:#f2edf9;border-color:#c6b3e4}
   .opt b{font-weight:800}
   .tipbar{display:flex;gap:6px;align-items:center;font-size:12.5px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:4px 9px}
   .tipbar .face{font-size:18px}
@@ -178,7 +180,7 @@
       <p><b>Walking model:</b> your pace is in flat-ground minutes per km, including short rests. Climbs add 15 min per 100 m going up, and walking back over a descent counts as a climb. Long days include a 45-min lunch.</p>
       <p><b>Light:</b> 🌇 is sunset (about 16:34–16:42, depending on the day and place) and 🌙 is when it gets dark, at the end of civil twilight about 27 minutes later. In deep valleys and forest it gets dim earlier than that.</p>
       <p><b>Paths:</b> the walks follow the Nakasendo as mapped on OpenStreetMap (© OpenStreetMap contributors, ODbL). Where the walk leaves the old road (the Kaida Plateau on Day 5, and the short walks to stations) the path comes from OpenStreetMap walking routes, so it's a best guess. One Day 5 stretch is still a straight line. Use <b>☰</b> to switch to straight lines between stops. Points marked ≈ are approximate. On the ground, follow your Walk Japan booklet and the signposts.</p>
-      <p><b>Timetables:</b> japan-guide.com (Kiso buses, 2026), Go Nagano, NAVITIME (Kaida bus, Usui line bus), Ekispert (Nagiso trains), JR East (Yokokawa) and the Karuizawa Aka Bus 2026 timetable. Times marked ≈ are my estimates from neighbouring stops, so check them at the station or ask your inn. Distances come from the Walk Japan itinerary.</p>
+      <p><b>Timetables:</b> japan-guide.com (Kiso buses, 2026), Go Nagano, the Kiso bus Kaida line timetable (Oct 2026), NAVITIME (Usui line bus), Ekispert (Nagiso trains), JR East (Yokokawa) and the Karuizawa Aka Bus 2026 timetable. Times marked ≈ are my estimates from neighbouring stops, so check them at the station or ask your inn. Distances come from the Walk Japan itinerary.</p>
       <p><b>Safety:</b> taxis are a last resort, so ask your inn to call one. Bear bells on in the forest, and never split up mid-pass. Emergency: 119 (ambulance) / 110 (police).</p>
     </div>
   </div>
@@ -233,6 +235,9 @@ const DEP = {
   nojiriTrain: L("6:35 7:15 8:24 10:32 12:32 14:47 17:29 18:29 20:32 22:02"),
   kaidaInfoBus: L("8:30 10:11 11:16 12:28 13:16 14:23 15:24 16:45 17:48 18:51 20:16"),
   kaidaShishoBus: L("8:36 10:17 11:22 12:34 13:22 14:29 15:30 16:51 17:54 18:57 20:22"),
+  // Kiso bus Kaida line (開田幹線, down), official Oct 2026 timetable: 木曽福島駅 → やまか旅館. Every run operates on weekdays.
+  kisoFKaida: L("7:54 9:35 10:40 11:52 12:40 13:47 14:48 16:09 17:12 18:10 19:40"),
+  kisoFKaidaArr: L("8:52 10:33 11:38 12:50 13:38 14:45 15:46 17:07 18:10 19:08 20:32"),
   yabuharaTrain: L("7:32 8:12 9:21 11:29 13:29 15:44 18:26 19:26 21:29"),
   naraiTrain: L("7:38 8:18 9:27 11:35 13:35 15:50 18:32 19:32 21:35"),
   usuiBus: L("6:59 9:20 11:05 12:55 14:20 15:35 16:30 18:05"),
@@ -273,6 +278,8 @@ const DAYS = {
         pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:40, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
   d5:{chip:"Day 5", date:"Tue 17 Nov", title:"Karasawa Falls → Kaida Plateau", walkStart:hm("7:00"), lunchKm:6, before:"the tour taxi to Karasawa Falls", transfer:{kind:"taxi", mins:25},
+      // skip the walk: the same Kaida bus runs from Kiso-Fukushima Stn (5 min from Iwaya Inn) straight to tonight's inn
+      skip:{mode:"🚌 Kaida bus", from:"Kiso-Fukushima Stn", fromLL:P.kisoF, walkMins:5, to:"Yamakanoyu", toLL:P.yamaka, deps:DEP.kisoFKaida, arrs:DEP.kisoFKaidaArr, via:[P.kaidaInfo, P.kaidaShisho]},
       pts:[
         pt(0, P.karasawa, "Karasawa Falls", "stop", 0,0),
         pt(3.5, P.jizo, "≈ Jizo Pass", "pass", 400,0),
@@ -378,6 +385,11 @@ function journeyOf(d){   // the planned tour transport, timed: morning transfer 
   return segs;
 }
 const segAt = (d, t) => journeyOf(d).find(g => t >= g.t0 && t < g.t1);
+/* a day's "skip the walk" bus (Day 5), offered while you're still at the inn or on the morning transfer */
+function skipOf(d, t){ const s = d.skip; if (!s || S.walkOver[d.key] != null || t >= walkStartOf(d)) return null;
+  const js = segAt(d, t); if (js && js.grp !== "am") return null;
+  const arr = t + s.walkMins, i = s.deps.findIndex(x => x >= arr - 0.01);
+  return i < 0 ? {s, arr, dep:null} : {s, arr, dep:s.deps[i], at:s.arrs[i], dep2:s.deps[i+1] ?? null, wait:s.deps[i] - arr}; }
 function bowPt(p, q, f, k=0.14, cap=40){ const vx = q[0]-p[0], vy = q[1]-p[1], l = Math.hypot(vx,vy) || 1, off = Math.min(l*k, cap);
   const c = [(p[0]+q[0])/2 - vy/l*off, (p[1]+q[1])/2 + vx/l*off], u = 1-f;
   return [u*u*p[0] + 2*u*f*c[0] + f*f*q[0], u*u*p[1] + 2*u*f*c[1] + f*f*q[1]]; }
@@ -685,7 +697,7 @@ function render(){
   let g = "";
   for (let i=0;i<6;i++) g += `<circle cx="${W-6}" cy="${H-6}" r="${18+i*13}" fill="none" stroke="#f4a7b9" stroke-opacity=".22" stroke-width="2"/>`;
   g += `<defs><marker id="arrF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2e8b3e"/></marker><marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e08a12"/></marker>
-        <marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d5a99"/></marker></defs>`;
+        <marker id="arrS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7b5ea7"/></marker><marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d5a99"/></marker></defs>`;
   const selKey = S.day === "d4" ? "d4"+S.course : S.day;
 
   // other days' walks (faded) with day tags
@@ -745,6 +757,16 @@ function render(){
   if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (back.p.hop.at) g += `<path d="${path([scr(back.p.ll), scr(back.p.hop.at)])}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (rideB && !shared) g += hopLine(back, -1, "#e08a12", "arrB"); }
+  const skip = skipOf(d, S.t);
+  if (skip){   // Day 5: the bus that skips the walk, from the station by the inn straight to tonight's inn
+    const s = skip.s, pts = [s.fromLL, ...s.via, s.toLL].map(scr), dd = path(smoothThrough(pts)), to = pts.at(-1);
+    g += `<path d="${dd}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${dd}" stroke="#7b5ea7" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrS)"/>`
+      + pts.slice(1, -1).map(q => `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="#7b5ea7" stroke-width="2"/>`).join("")
+      + `<circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="6" fill="#fff" stroke="#7b5ea7" stroke-width="3"/><circle cx="${to[0]}" cy="${to[1]}" r="6" fill="#7b5ea7" stroke="#fff" stroke-width="2"/>`;
+    if (skip.dep != null) addLabel(to[0], to[1], `🚌 skip the walk: ${fmt(skip.dep)} → ${s.to} ${fmt(skip.at)}`, "#6a4c97", {pri:3, boxed:true, bold:true, time:skip.at});
+    addLabel(pts[0][0], pts[0][1], `🚏 ${s.from}`, "#6a4c97", {pri:2});
+  }
   if (shared){   // both ways out end up on the same bus/train: one line, orange-and-green where they share it
     const N = 10, pts = shared.nodes.map(scr), poly = smoothThrough(pts, N), cut = shared.k * N, own = shared.long === fwd ? "#2e8b3e" : "#e08a12";
     const P1 = path(poly.slice(0, cut + 1)), P2 = path(poly.slice(cut)), to = pts.at(-1);
@@ -906,7 +928,15 @@ function renderText(fwd, back){
     document.getElementById("fwd").innerHTML = optHTML(true, fwd);
     document.getElementById("back").innerHTML = optHTML(false, back, fwd);
   }
-  document.getElementById("back").classList.toggle("off", !!jsNow || !!preNow || !!(back && back.off));
+  const sk = skipOf(d, t);
+  if (sk){ const s = sk.s, q = sk.dep != null ? waitQuip(sk.wait) : null;
+    document.getElementById("back").innerHTML = `<h3>🚌 Or skip the walk: ${esc(s.mode.split(" ").slice(1).join(" "))}</h3>`
+      + `<div>🚶 ${s.walkMins} min to <b>${esc(s.from)}</b> → arrive ${fmt(sk.arr)}</div>`
+      + `<div class="big">${sk.dep != null ? `${q.icon} 🚌 ${fmt(sk.dep)} · ${waits({...sk, dep2:null})}` : "🚌 none left today"}</div>`
+      + `<div>${sk.dep != null ? `<span class="pill s">🚌 at ${esc(s.to)} ${fmt(sk.at)}</span> ${sk.dep2 != null ? `then <b>${fmt(sk.dep2)}</b>` : "<b>last one today</b>"}` : `Last bus was ${fmt(s.deps.at(-1))}.`}</div>`
+      + `<div class="fine">Straight to tonight's inn, no change · 11 a day (Oct 2026 timetable) · ask about bags and early check-in</div>`; }
+  document.getElementById("back").classList.toggle("skip", !!sk);
+  document.getElementById("back").classList.toggle("off", !sk && (!!jsNow || !!preNow || !!(back && back.off)));
   let tip;
   if (jsNow && jsNow.done) tip = "Yukata on, feet up 🍵. Big day tomorrow?";
   else if (jsNow) tip = jsNow.kind === "wait" ? "Platform snack time 🍡. Everyone together? Good." : "Window seat squirrels 🐿️🐿️🐿️. Rest those legs.";
@@ -936,6 +966,9 @@ const $ = id => document.getElementById(id);
 function sync(){ $("time").value = Math.round(S.t); $("pace").value = S.pace; }
 function setFromTime(t){ S.t = t; S.km = Pos(D(), t, S.pace).km; }
 function setFromPos(km){ const d = D(); S.km = Math.min(Math.max(km,0), total(d)); S.t = T(d, S.km, S.pace); }
+/* dragging: within a finger's width of a day's start (or finish), land exactly on it */
+const END_SNAP_PX = 18;
+const snapEnds = (d, km, pxStart, pxEnd) => pxStart < END_SNAP_PX && km < 0.6 ? 0 : pxEnd < END_SNAP_PX && km > total(d) - 0.6 ? total(d) : km;
 function setPace(p){ S.pace = p; const d = D(); if (S.km > 0.01 && S.km < total(d) - 0.01) S.t = T(d, S.km, p); else setFromTime(S.t); }
 $("time").addEventListener("input", e => { setFromTime(+e.target.value); sync(); render(); });
 $("pace").addEventListener("input", e => { setPace(+e.target.value); sync(); render(); });
@@ -990,7 +1023,8 @@ function dragTo(p){
     document.querySelectorAll("#courseBox button").forEach(x => x.setAttribute("aria-pressed", x.dataset.c === S.course ? "true":"false"));
     drawChips();
   }
-  setFromPos(pick.km);
+  const d = D(), px = ll => { const q = scr(ll); return Math.hypot(p[0]-q[0], p[1]-q[1]); };
+  setFromPos(snapEnds(d, pick.km, px(llAt(d, 0)), px(llAt(d, total(d)))));
 }
 svg.addEventListener("pointerdown", e => {
   svg.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, local(e));

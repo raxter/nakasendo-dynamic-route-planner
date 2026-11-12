@@ -286,6 +286,16 @@ function drawLive(){
     if (rideF) rideLine(fwd, 1, "#2e8b3e");
     if (rideB) rideLine(back, -1, "#e08a12");
   }
+  const skip = skipOf(D(), S.t);
+  if (skip){   // Day 5: the bus that skips the walk
+    const s = skip.s, line = smoothThrough([s.fromLL, ...s.via, s.toLL]);
+    LF.polyline(line, {color: "#fffdf8", weight: 7, opacity: .9, interactive: false}).addTo(LLAYER);
+    LF.polyline(line, {color: "#7b5ea7", weight: 4, dashArray: "9 6", interactive: false}).addTo(LLAYER);
+    s.via.forEach(v => LF.circleMarker(v, {radius: 4, color: "#7b5ea7", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false}).addTo(LLAYER));
+    LF.circleMarker(s.fromLL, {radius: 6, color: "#7b5ea7", weight: 3, fillColor: "#fff", fillOpacity: 1}).addTo(LLAYER).bindTooltip(`🚏 ${esc(s.from)}`);
+    const end = LF.circleMarker(s.toLL, {radius: 7, color: "#fff", weight: 2, fillColor: "#7b5ea7", fillOpacity: 1}).addTo(LLAYER);
+    if (skip.dep != null) end.bindTooltip(`🚌 skip the walk: ${fmt(skip.dep)} → ${esc(s.to)} ${fmt(skip.at)}`, {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (S.txt === 2 ? " faded" : "")});
+  }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
   let ll = llAt(d, km), icon = iconSquirrels(), drag = true;
@@ -295,9 +305,14 @@ function drawLive(){
   else if (pre) ll = journeyOf(d)[0].a;
   const m = LF.marker(ll, {icon, draggable: drag, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);
   // dragging keeps the squirrels on the trail all the way (like the sketch map): snap on every move
-  const snapDrag = p => { const s = snapAnyDay([p.lat, p.lng]);
+  // stay on today's walk unless another day is clearly nearer (where days meet, e.g. Magome, today wins),
+  // and land exactly on the day's start or finish when the finger is within a few pixels of it
+  const snapDrag = p => { const ll = [p.lat, p.lng], mpp = 40075016.7 * Math.cos(p.lat * Math.PI/180) / Math.pow(2, LMAP.getZoom() + 8);
+    let s = {...snapToDay(D(), ll), day: S.day};
+    ORDER.forEach(k => { if (k === S.day) return; const o = snapToDay(dayObj(k), ll); if (o.dist + 8 * mpp < s.dist) s = {...o, day: k}; });
     if (s.day !== S.day){ S.day = s.day; $("courseBox").hidden = S.day !== "d4"; drawChips(); }
-    setFromPos(s.km); sync(); render(); return llAt(D(), S.km); };
+    const d = D(), cp = LMAP.latLngToContainerPoint(p), px = q => cp.distanceTo(LMAP.latLngToContainerPoint(q));
+    setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return llAt(D(), S.km); };
   m.on("dragstart", () => LDRAG = true);
   m.on("drag", e => m.setLatLng(snapDrag(e.target.getLatLng())));
   m.on("dragend", e => { snapDrag(e.target.getLatLng()); LDRAG = false; render(); });
