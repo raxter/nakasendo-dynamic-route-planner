@@ -123,6 +123,12 @@
   .tl li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:4px 0;border-top:1px dashed var(--line)}
   .tl .t{font-weight:800;color:var(--ai)} .tl .past{opacity:.45} .tl .here{background:var(--sakura-soft);border-radius:8px}
   .fine{font-size:12px;color:var(--quiet)}
+  .menu{position:absolute;right:52px;top:8px;z-index:7;max-width:calc(100% - 64px);background:rgba(255,253,248,.98);border:2px solid var(--line);border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:7px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .menu[hidden]{display:none}
+  .mrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;font-weight:800;white-space:nowrap}
+  .menu .toggle button{padding:2px 9px}
+  .menu .fine{font-size:10.5px;line-height:1.3;max-width:300px}
+  #zmenu[aria-expanded="true"]{background:var(--sakura-soft);border-color:var(--sakura)}
   .hintpop{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:11.5px;padding:2px 8px;border-radius:999px;transform:translate(-50%,-150%);white-space:nowrap;transition:opacity .4s}
   #lmap{position:absolute;inset:0;z-index:1;isolation:isolate;background:#e9e4da}
   .zoom,.legend{z-index:5}
@@ -167,21 +173,26 @@
       <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️</button>
       <button type="button" id="zgps" aria-label="Show my location" title="Show my location" hidden>🎯</button>
       <button type="button" id="ztxt" aria-label="Map text: shown" title="Map text: shown → hidden → faded">👁️</button>
-      <button type="button" id="zsize" aria-label="Map text size: full" title="Map text size: 100% / 50%" style="font-weight:800">Aa</button>
+      <button type="button" id="zmenu" aria-label="Map look: paths and text size" title="Map look: paths and text size" aria-expanded="false" aria-controls="menu">☰</button>
+    </div>
+    <div class="menu" id="menu" role="dialog" aria-label="Map look" hidden>
+      <div class="mrow"><span>🥾 Paths</span><div class="toggle" id="mPaths" role="group" aria-label="How to draw the walks"><button type="button" data-v="walk">Walking path</button><button type="button" data-v="straight">Straight lines</button></div></div>
+      <div class="mrow"><span>Aa Text size</span><div class="toggle" id="mSize" role="group" aria-label="Map text size"><button type="button" data-v="0.5">50%</button><button type="button" data-v="0.75">75%</button><button type="button" data-v="1">100%</button></div></div>
+      <div class="fine">Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
-      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span>
+      <span><i class="sw done"></i>walked</span><span><i class="sw walk"></i>ahead</span><span><i class="sw hop"></i>bus/train ahead</span><span><i class="sw back"></i>turn back</span><span><i class="sw pre"></i>tour transport</span><span><i class="stn"></i>station</span><span>🏮 inn</span><span><i class="sw zgo"></i>exits</span><span><i class="sw zback"></i>turn-back only</span><span><i class="sw zcommit"></i>no turning back</span><span><i class="sw znobus"></i>no bus left</span><span id="lgOsm">trail © OpenStreetMap</span>
     </div>
     <div class="hintpop" id="hint">Drag me along the route, even onto another day ↔</div>
     <div class="sheet" id="tlSheet" hidden><button class="iconbtn close" data-close="tlSheet" aria-label="Close">✕</button><h2 id="tlTitle"></h2><ul class="tl" id="tl"></ul></div>
     <div class="sheet" id="infoSheet" hidden><button class="iconbtn close" data-close="infoSheet" aria-label="Close">✕</button>
       <h2>How this works</h2>
-      <p><b>🗺️ Live map:</b> swaps the sketch for a real Japanese topographic map (GSI, or OpenStreetMap / aerial photo from the layer button) with your location as a blue dot. Tap the dot → <b>Set position &amp; time to here</b>: the squirrels jump to the nearest point on the trail, the clock jumps to now, today's start time stays put and the pace is worked out from how far you've come. The trail is drawn as straight lines between stops, so follow the signposts and the map's own paths on the ground.</p>
+      <p><b>🗺️ Live map:</b> swaps the sketch for a real Japanese topographic map (GSI, or OpenStreetMap / aerial photo from the layer button) with your location as a blue dot. Tap the dot → <b>Set position &amp; time to here</b>: the squirrels jump to the nearest point on the trail, the clock jumps to now, today's start time stays put and the pace is worked out from how far you've come. The trail line comes from OpenStreetMap (or straight lines, from ☰), so on the ground follow the signposts and your Walk Japan notes.</p>
       <p><b>Sliders:</b> time and pace are at the top. Drag the squirrel pin along the walking route to set your position. Drag it onto another day's route and it switches to that day. Pace only changes when you move it. Moving time moves the squirrels, and dragging the squirrels changes the time. Changing pace keeps the squirrels where they are and recalculates the time.</p>
       <p><b>Start time:</b> drag the ▲ under the time bar to change when you leave the inn. On Day 5 the tour taxi leaves then (≈25 min to the falls). On Day 6 the tour vehicle leaves then (≈45 min to Kiso-Fukushima Station), and you catch the next train to Yabuhara. Walk Japan doesn't publish these times: it only says the transfer is after breakfast, so the durations are my estimates. The 🏁 on the bar is your expected finish, 🌇 is sunset and 🌙 is dark.</p>
       <p><b>Walking model:</b> your pace is in flat-ground minutes per km, including short rests. Climbs add 15 min per 100 m going up, and walking back over a descent counts as a climb. Long days include a 45-min lunch.</p>
       <p><b>Light:</b> 🌇 is sunset (about 16:34–16:42, depending on the day and place) and 🌙 is when it gets dark, at the end of civil twilight about 27 minutes later. In deep valleys and forest it gets dim earlier than that.</p>
-      <p><b>The map is a sketch:</b> lines join known points in straight lines, and points marked ≈ are approximate. It's not a GPS track, so on the ground follow your Walk Japan booklet.</p>
+      <p><b>Paths:</b> the walks follow the Nakasendo as mapped on OpenStreetMap (© OpenStreetMap contributors, ODbL). Where the walk leaves the old road (the Kaida Plateau on Day 5, and the short walks to stations) the path comes from OpenStreetMap walking routes, so it's a best guess. One Day 5 stretch is still a straight line. Use <b>☰</b> to switch to straight lines between stops. Points marked ≈ are approximate. On the ground, follow your Walk Japan booklet and the signposts.</p>
       <p><b>Timetables:</b> japan-guide.com (Kiso buses, 2026), Go Nagano, NAVITIME (Kaida bus, Usui line bus), Ekispert (Nagiso trains), JR East (Yokokawa) and the Karuizawa Aka Bus 2026 timetable. Times marked ≈ are my estimates from neighbouring stops, so check them at the station or ask your inn. Distances come from the Walk Japan itinerary.</p>
       <p><b>Safety:</b> taxis are a last resort, so ask your inn to call one. Bear bells on in the forest, and never split up mid-pass. Emergency: 119 (ambulance) / 110 (police).</p>
     </div>
@@ -208,14 +219,14 @@ const SUN_BY_DAY = {d2:"16:42", d3:"16:41", d4:"16:40", d5:"16:39", d6:"16:38", 
 const sunsetOf = d => hm(SUN_BY_DAY[d.key] || "16:40"), darkOf = d => sunsetOf(d) + TWILIGHT;
 
 /* ---------- places ---------- */
-const P = {
+const P = {   // Nenoue Pass (根の上峠), Torii Pass (鳥居峠) and Sakamoto-juku (坂本宿) are placed from OpenStreetMap
   ena:[35.4551,137.4082], nakatsu:[35.5005,137.5031], ochiai:[35.5117,137.5312], ishi:[35.5144,137.5487],
   magome:[35.5249,137.5649], motomiya:[35.5203,137.5609], magomeToge:[35.5391,137.5846], odaki:[35.5546,137.5889], otsumago:[35.5647,137.5930],
-  tsumago:[35.5790,137.5950], nagiso:[35.5988,137.6084], nenoue:[35.6380,137.6000], nojiri:[35.6730,137.6362], kisoF:[35.8440,137.6933],
+  tsumago:[35.5790,137.5950], nagiso:[35.5988,137.6084], nenoue:[35.6532,137.6551], nojiri:[35.6730,137.6362], kisoF:[35.8440,137.6933],
   iwaya:[35.8505,137.6973], karasawa:[35.9131,137.6498], jizo:[35.9270,137.6380], kaidaInfo:[35.9380,137.6317], kaidaShisho:[35.9407,137.6003],
-  nishino:[35.9520,137.5960], yamaka:[35.9584,137.5841], yabuhara:[35.9302,137.7845], torii:[35.9480,137.7970], narai:[35.9691,137.8156],
+  nishino:[35.9520,137.5960], yamaka:[35.9584,137.5841], yabuhara:[35.9302,137.7845], torii:[35.9518,137.7965], narai:[35.9691,137.8156],
   shiojiri:[36.1150,137.9540], nagano:[36.6432,138.1886], karuizawaStn:[36.3426,138.6353], grandKyu:[36.3528,138.6346],
-  kumano:[36.3698,138.6562], kyuKaru:[36.3570,138.6360], sakamoto:[36.3400,138.7150], yokokawa:[36.3363,138.7370], takasaki:[36.3220,139.0128]
+  kumano:[36.3698,138.6562], kyuKaru:[36.3570,138.6360], sakamoto:[36.3499,138.7175], yokokawa:[36.3363,138.7370], takasaki:[36.3220,139.0128]
 };
 
 /* ---------- departures ---------- */
@@ -292,8 +303,16 @@ const DAYS = {
         pt(16, P.yokokawa, "Yokokawa Stn", "end", 20,80, {mode:"🚃 JR train", to:"Takasaki", toLL:P.takasaki, ride:33, deps:DEP.yokokawaTrain, freqNote:"about hourly"})
       ]}
 };
-Object.entries(DAYS).forEach(([k,d]) => d.key = k.startsWith('d4') ? 'd4' : k);
+Object.entries(DAYS).forEach(([k,d]) => { d.key = k.startsWith('d4') ? 'd4' : k; d.id = k; });
 const ORDER = ["d2","d3","d4","d5","d6","d7"];
+/* TRAIL-PATHS:BEGIN generated by tools/build_paths.py from OpenStreetMap (© OpenStreetMap contributors, ODbL). Don't edit by hand. */
+const TRAIL_ENC = {"d2":["kykwEgpteY^SNF^o@ZR|C}BDRyB}KyBG_BcFbEsAaBaF}BkFaCzAkB_DaB{FsBqEeCaCsBQaAr@qKoOqCgF{AkAScEUGk@p@U@cBsAy@uAoAaHOkC@}Hz@uCWqDcBwFk@cDo@oA_DmDs@wAgB}Aa@sBSuDc@kAsAsAs@qByAaCm@_BYwCFoGk@uDJ}Ge@qIk@gEYsEc@kCgEwIwAmIeCgDmAqC_AqAYReBsAaBLq@MuDFeAc@aAoACu@VkAEy@iCsIYkHN}MZ_COsBH}HiAyDCmHeB_Fw@kHEsBl@gHk@uBAcB|@kBf@qDlFaOtAaJB_CIu@cA}Bi@a@k@gAiCyMmAAu@q@UaE}@_FcBcDmAuANWk@y@FO[q@uIaH_@u@K_A}@M?Yj@_Ae@i@}@o@kAMeFd@kDaBoB{BwGoEiEqDeA_Be@IeCcE}@m@y@qAuA_AeCgE{AX[IyA}EgBq@mBH[oEg@gC_DgDcB{CkEgN_CdAeH{PuLuM}HpLOAI`@WI_@nARHGV","cutwEkagfYFWSI^oAVHHa@N@~HqL{GaH_@NBSUCj@q@AY_@v@UWkAn@Be@[AV}@]sBOcF_@sEo@}DeByDc@iEiA_@Nq@d@RIiB`AuBu@JaB{@k@@iB_BiBqBsAmEkCh@gAw@mACOIGu@iAYkBsAaBNG_Ai@kAi@g@qA{B]Kg@kCqARS[gAFWRGl@IBwCiHb@eBsAqCkA_Ai@EYeAw@gA[_AQAApAoAPIITaA@yCMQ]b@SMGwBc@gAHsAQ}AH]dAo@s@uAxA}@W}Bo@q@QkBJsBW_A~EsDk@S","c{vwE_qlfYj@Rb@_@~@_A`CuDWaANgBRm@G[l@uALsAv@iA`A_@R_BC_BMSgAWeBEuAo@}@eAe@yBsCuCb@o@rB]p@m@`@_An@W@wBw@sBiD{BgAgBoBmByAwDSsCm@gAb@eAGkAFwAcBqB]{AB}Cg@k@q@eC_@mCAP","_lwwEk~ofYAmBuB}@aBqDuBuAmAkEmAEaAcAIc@HcBeCeJKyDmAsERqBKiDs@gEgCcCyCaEqCmBqASeA_B}@_@}@{@gC_Eo@a@w@?e@aBkEkHoAtB"],"d3":["smywEscsfYnAuBsAwAgAZy@[aEiHgD}CwHwKCsAg@w@NMToAE{@OMmAPu@Se@JeB]sAeA?k@dA{BP}BEeAi@}@wB_Bq@kBk@WOg@mAYkAoBe@wDm@oB]QuBT[m@YoAQgEu@iEB{AZkA}@yDoCuBmBaAeDeDaBk@gC_@Y[cBB}Bi@SBHT","kf|wEw~vfYUq@mAQo@m@_AYGJZl@c@N}Ds@eA?c@e@]Ec@w@kAe@_ID_AV}BSgAu@WgAk@k@Kk@q@g@_AWsABcAs@cAWsCEcCv@oDqA_EPmCsCe@MCWqBPkBo@Yc@yDEEOj@aAKg@cB`@oA]Q|B","gg_xEsywfYP}Bu@AeCh@gCw@uAh@]_@w@@aEcBeBiA{@h@k@Iq@eAPu@Sy@aBq@g@m@c@mAa@]sAQ?Q|@k@{BE}@XcBk@]t@aDdAqJcBWcAJM"],"d4B":["kfaxEgsxfYeCr@WCw@sAQ?YcAeCOc@m@IuAc@S}@`@e@`BYXMQQHiBq@k@e@i@JiF_BeAn@oCZm@e@?QeBaAyB_DmEeAkC|@_Cd@iClAoBTWKWk@eCc@yD_BqE}@hCl@MlBoAjAs@DGQ","w_dxEw_yfYFPr@EnAkALmBoCo@s@mA{Cv@}@gAu@~@aCaAs@kBw@m@u@ZCjBU`@[@i@k@wF{Bo@{@i@iBqD}A_BoBg@oA}A_@[d@qHYYo@dAeA?m@{CIaApAeC^y@Kw@cEq@Lk@lBy@[gByAm@cDcA[oAcA@aAu@o@`@u@sBiAmAkB[oA@a@x@mBBYUu@sAmAeBSq@uA}@Vy@aB_@_AAqDYs@{@i@gBe@}Hd@{B_BzB~ApAAJTv@NY@Ch@e@?WdCyBwAqCc@B{@"],"d4A":["kfaxEgsxfYeCr@WCw@sAQ?YcAeCOc@m@IuAc@S}@`@e@`BYXMQQHiBq@k@e@i@JiF_BeAn@oCZm@e@?QeBaAyB_DmEeAkC|@_Cd@iClAoBTWKWk@eCc@yD_BqE}@hCl@MlBoAjAs@DGQ","w_dxEw_yfYFPr@EnAkALmBoCo@s@mA{Cv@}@gAu@~@aCaAs@kBw@m@u@ZCjBU`@[@i@k@wF{Bo@{@i@iBqD}A_BoBg@oA}A_@[d@qHYYo@dAeA?m@{CIaApAeC^y@Kw@cEq@Lk@lBy@[gByAm@cDcA[oAcA@aAu@o@`@u@sBiAmAkB[oA@a@x@mBBYUu@sAmAeBSq@uA}@Vy@aB_@_AAqDYs@{@i@gBe@}Hd@{B_BzB~ApAAJTv@NY@Ch@e@?WdCyBwAqCc@B{@","o{gxEos{fYCz@eCM}EiBsK_@kAqAkDMi@uByDsAc@uAkBgBk@G_@gDg@DKk@aB}AgCc@e@uAb@oAGa@uC}AU[HgDCaBOa@i@GgE`Cm@AcAaBsAZi@EsAs@gAiA_AyC{A}BQd@gBtAOn@e@}@]_C_Am@i@{@}BeA}AWWa@@]e@gBaBq@Km@Re@E]iAwBi@mBo@WoA?eC{@aAcAg@kCs@wAWeC}@cCAcBsAeD@}Bb@oB`@wG[k@qBqAgDeHqBwBWqAFmBa@eAaBaBBuBZu@Ko@oAL]VMx@]?\\{CUcFQs@kAYcClCy@o@gAImBoEmGeEI{EyG{Ia@Gc@k@Kc@_Ai@qBOc@x@[Fq@~@Sf@}@MyA|@u@Iq@RcBAsBmDu@X]n@q@EeAuAC}Es@sBQqDlAkEAgBYU{Bc@u@JYoB]m@QyCq@@G}BSB[{@c@Si@OwBBc@]aAeBc@iDq@Hq@jAw@BOa@QyDmBeG\\]gAZs@f@mCDw@r@y@UcBqDq@qDy@eBu@cDk@w@s@U_B?a@PCn@mAu@oClAcBOcBsAuB{@_BaBsAgCcAJa@oA{@gAk@aBoBJKGHe@uDxAqC^cDjCwDUyBt@oAk@wASLp@j@p@Eb@uE|D","oorxEkwdgYb@zAAhA[TcBMeAj@ELl@|AOh@sCu@{@pAaDzBoA`Bg@hDsBzBu@[Cm@T_Az@MPq@_A]SN}@dCqA~BLvBSbD[zAW`H_@bA_A|@c@rAsBbBe@nA{Ad@s@dA_@FWOLqAfAg@@w@yD?qA{@wAj@sBGGTjAlAOl@Jd@fALb@ZHbB_@p@{CDi@^e@`C{@|AAdAs@`Ec@HMIJgFa@Oi@p@SbBS^[KKe@QEs@~AmB|AaAXw@vAiAI_EdCoBj@m@jAcBr@iDxBe@x@uA`@m@t@q@T_HbIkD}Da@O\\`@Yh@"],"d5":["{gezEgvcgYa@^l@jA@r@qApCoBhGg@hCw@|AZjCMf@wDjCmAlBQbCv@rCKd@_@NkAw@c@?sCfBsFlAYAIUzBwDLo@W[yA|AkABErBYd@o@@gE{Bi@IGTV|Br@~@Ff@}@~A}An@g@t@{@p@Ol@Bx@cDR{BhByEfCyNE}BNEm@","w~gzEolagYDl@wCRsG|APnACnAwBjFm@pCTRg@`AKnAw@jAd@pBGfAkArAuAqC_EoB{@w@kAx@B^q@hCs@f@yCfAqArEaAuA}@eFkHsBa@F]pBYf@mELU~@","ocjzEce`gY{OfcE","ktjzE{`zfYEZ}Fi@k@r@eDvBy@UqAqAaDdAcD_AcCFsBn@}AG}ElCwDbAe@dBi@f@qD^Z~@|ABNh@IT{@Jy@d@qAq@uDU_A`G","_{lzE_fyfY~@aGu@SeACg@d@kAHoIo@qEd@gCp@eBo@gDXwGq@kCDwB{@o@sBsA}@CJ~@jAGjBNj@d@p@jBhATb@F`BQd@_Cz@w@e@kAM_Au@cDqAs@NCb@xBnFl@zBsDlAk@f@Qt@?|@zAbBIjCLlAC`JLnCKh@uAh@{@p@o@jAOfBdFjBrFd@j@^p@DP`Ad@TbAq@pANd@n@nBdAVz@n@b@k@zCLh@IZl@n@Xc@"],"d6":["wrhzEc`~gYWzAoCIQu@e@[_CEGXwA@gFt@]Ei@cAkDc@cEBmGd@eBAgEu@uDZAYp@GP_@iACUk@s@_@Wy@yEmCk@SiDWy@w@iBG}AuAeDoAyFgBeCUgA}Ao@_Fm@iAI|@QYGf@eAuAUdDg@^c@@Wg@Zi@UqA}@aAmCuAM_@P{AY{@b@wBPuC_@kBDs@iBuAUu@B_AKc@qE_@iAqAoAc@?KlB`@k@iA}@{@Q?","wylzEck`hYP?]mAJiAy@y@Dv@WRgAEcA}@e@@o@k@c@CeA^Gc@ZKCg@OeAm@sAPY[Qo@wAe@WcAoBuAaBSw@aAeAU_Am@V@mASy@y@kAFc@TMiAo@{@ZQk@SAB}BKo@iA_@g@J_@KSUBc@]y@cBe@q@h@MzAI?MiDe@{C?iBuAoCXuAwBy@Bc@bAo@S]gDbB_AGaFq@gEcCwCyBS{@wDkFiHiG{JaNgDyC\\_@"],"d7":["_d{|EgadmYPSjECZhAwLP?Lf@AD~BaBfD{BsAkLeCiGqFuKaLsCeFcFsFoAc@}@iCkCuCaBwC{BsHkFgL_Bw@b@m@~AAp@}@Ju@@q@}BlATcBOkIF{BWa@]CDzAs@vDOFs@_FaC}Ii@e@Su@gBqC[wB}BoEa@qBsAu@Ha@fBsB?iDiBmBmAfB","gn~|EghhmYlAgBmCyAcBeBUc@QqBr@}Bm@gFNaAbBoCV_CiB`@cAYu@\\eAM_@q@^oDkBf@MQ@k@d@aBEgASq@D{@l@_BNsDVmArBwC~BkAxCmFpByFm@iDCaAFwDp@sEY{@mBsCKmB[w@QmBiAgBs@}BHy@p@eA`Am@T_@f@}Ah@mEtAsCx@mDLeDYqCo@{APqAfDgHVoAHuCpBgCd@uAnAuABo@_Aw@Om@@iBb@sAj@y@p@d@jDk@zAiBlA}BhFoEN_AM{CFiBYe@eBWSe@Ju@d@a@V{@p@}@vAs@v@iAJ_Cr@i@FaAc@qAFiAnIuQbAo@xAmBEgBYcALoA|AuB|A_DZoCbCoC^eC`CcD@]_@o@QuBa@]e@iBo@MNo@_@s@f@[EUk@Fw@pAQt@oB`@z@eBOoB`@eAg@CI[z@_Cp@eAxCmBZ}AfBdALWUuCVk@m@c@PuAdAiAlBKhDo@Vm@d@`@n@JX|@lBsBpDRnE_BlE{D`LiMk@b@","{qz|EkgtmYtRaSjO}PvWoT`@oB\\IrA\\nAy@`A}Dt@cJ\\}@Mk@p@sF?YOGFUNFXYxBoGz@gJhAmGdAX"]};
+/* TRAIL-PATHS:END */
+const decodePolyline = s => { const out = []; let i = 0, lat = 0, lon = 0;
+  while (i < s.length){ for (const k of [0, 1]){ let b, sh = 0, r = 0; do { b = s.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32);
+      const v = r & 1 ? ~(r >> 1) : r >> 1; if (k) lon += v; else lat += v; } out.push([lat/1e5, lon/1e5]); }
+  return out; };
+const TRAIL = Object.fromEntries(Object.entries(TRAIL_ENC).map(([k, segs]) => [k, segs.map(decodePolyline)]));   // real walking paths, one polyline per stop-to-stop stretch
 /* pre-planned tour transport over the whole trip */
 const TOUR = [
   {day:"d2", a:[35.36,137.20], b:P.ena, label:"🚃 from Nagoya", stub:true},
@@ -324,7 +343,10 @@ const INNS = [
 ];
 
 /* ---------- state ---------- */
-const S = {walkOver:{}, txt:2, txtScale:0.5, day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
+const S = {walkOver:{}, txt:2, txtScale:0.5, paths:"walk", day:"d2", course:"B", pace:30, km:0, t:hm("7:00"), starts:{}};
+const PREFS = ["paths", "txtScale"];   // look settings from the ☰ menu, remembered on this device
+try { const sv = JSON.parse(localStorage.getItem("nakasendo.look") || "{}"); PREFS.forEach(k => { if (sv[k] != null) S[k] = sv[k]; }); } catch (e) {}
+const savePrefs = () => { try { localStorage.setItem("nakasendo.look", JSON.stringify(Object.fromEntries(PREFS.map(k => [k, S[k]])))); } catch (e) {} };
 const startOf = d => S.starts[d.key] ?? d.walkStart;            // ▲ = when you leave the inn
 const KF_NORTH = L("7:12 7:52 9:01 11:09 13:09 15:24 18:06 19:06 21:09");   // ≈ Kiso-Fukushima → Yabuhara departures
 function transferOf(d){            // the tour's morning transfer, from the leave time
@@ -392,9 +414,28 @@ function Pos(d, t, pace){
     acc += m; }
   return {km:total(d), state:"arrived"};
 }
-const llAt = (d, km) => { for (let i=0;i<d.pts.length-1;i++){ const a=d.pts[i], b=d.pts[i+1];
-    if (km <= b.km + 1e-9){ const f = (km-a.km)/(b.km-a.km || 1); return [a.ll[0]+f*(b.ll[0]-a.ll[0]), a.ll[1]+f*(b.ll[1]-a.ll[1])]; } }
-  return d.pts.at(-1).ll; };
+/* route geometry: the stops joined by the real walking path (S.paths = "walk") or by straight lines ("straight").
+   The stops' km stay the truth for timing; each stretch of path is stretched to fit them. */
+const GEOM = {};
+const mDist = (a, b) => Math.hypot((a[1]-b[1]) * 111320 * Math.cos(a[0]*Math.PI/180), (a[0]-b[0]) * 110540);
+function geomOf(d){
+  const id = d.id + ":" + S.paths; if (GEOM[id]) return GEOM[id];
+  const segs = S.paths === "walk" ? TRAIL[d.id] : null, out = [{ll:d.pts[0].ll, km:d.pts[0].km}];
+  for (let i = 0; i < d.pts.length-1; i++){ const a = d.pts[i], b = d.pts[i+1], line = segs?.[i]?.length > 1 ? segs[i] : [a.ll, b.ll];
+    const cum = [0]; for (let j = 1; j < line.length; j++) cum.push(cum[j-1] + mDist(line[j-1], line[j]));
+    const len = cum.at(-1) || 1;
+    for (let j = 1; j < line.length - 1; j++) out.push({ll:line[j], km:a.km + cum[j]/len*(b.km - a.km)});
+    out.push({ll:b.ll, km:b.km}); }
+  return GEOM[id] = out;
+}
+const llAt = (d, km) => { const g = geomOf(d); let lo = 0, hi = g.length - 1;
+  if (km <= g[0].km) return g[0].ll; if (km >= g[hi].km) return g[hi].ll;
+  while (hi - lo > 1){ const m = (lo + hi) >> 1; if (g[m].km <= km) lo = m; else hi = m; }
+  const a = g[lo], b = g[hi], f = (km - a.km)/(b.km - a.km || 1);
+  return [a.ll[0] + f*(b.ll[0]-a.ll[0]), a.ll[1] + f*(b.ll[1]-a.ll[1])]; };
+/* lat/lng slice of a day's walk between two km marks */
+const sliceLL = (d, a, b) => [llAt(d, a), ...geomOf(d).filter(v => v.km > a && v.km < b).map(v => v.ll), llAt(d, b)];
+const lineLL = d => geomOf(d).map(v => v.ll);
 const nextDep = (deps, t) => deps.find(x => x >= t - 0.01);
 const afterDep = (deps, dep) => dep == null ? null : deps.find(x => x > dep + 0.01);
 
@@ -482,12 +523,12 @@ function fitBox(lls, pad){ pad = pad ?? Math.min(70, W*0.1);
   V.tx = W/2 - (x0+x1)/2*V.k; V.ty = topPad + (H-topPad-botPad)/2 - (y0+y1)/2*V.k;
   clampView();
 }
-const fitDay = () => { const d = D(); const lls = d.pts.map(p=>p.ll); d.pts.forEach(p => p.hop?.at && lls.push(p.hop.at)); fitBox(lls); };
+const fitDay = () => { const d = D(); const lls = lineLL(d); d.pts.forEach(p => p.hop?.at && lls.push(p.hop.at)); fitBox(lls); };
 const fitTrip = () => fitBox(ALL, 30);
 
 /* ---------- drawing ---------- */
 const path = arr => arr.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
-const routeSlice = (d, a, b) => { const out=[scr(llAt(d,a))]; d.pts.forEach(p => { if (p.km > a && p.km < b) out.push(scr(p.ll)); }); out.push(scr(llAt(d,b))); return out; };
+const routeSlice = (d, a, b) => sliceLL(d, a, b).map(scr);
 function arcPath(a, b, side, strength=0.42, minOff=34, maxOff=150){
   const vx = b[0]-a[0], vy = b[1]-a[1], l = Math.hypot(vx, vy) || 1, nx = -vy/l, ny = vx/l;
   const off = Math.min(Math.max(l*strength, minOff), maxOff) * side;
@@ -617,7 +658,7 @@ function render(){
 
   // other days' walks (faded) with day tags
   ORDER.forEach(k => { const o = dayObj(k); if (o === d) return;
-    g += `<path d="${path(o.pts.map(p=>scr(p.ll)))}" stroke="#5a9a5b" stroke-opacity=".35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+    g += `<path d="${path(lineLL(o).map(scr))}" stroke="#5a9a5b" stroke-opacity=".35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
     const m = scr(o.pts[Math.floor(o.pts.length/2)].ll); addLabel(m[0], m[1], o.chip, "#8a7a6e", {boxed:false, pri:0, size:11});
   });
   // tour transport (all days; today's bolder)
@@ -640,7 +681,7 @@ function render(){
     addLabel(x, y, `Night ${n.n} · ${n.name}`, "#8a7a6e", {boxed:false, pri:0, size:10.5}); });
 
   // today's route
-  const all = d.pts.map(p=>scr(p.ll));
+  const all = lineLL(d).map(scr);
   g += `<path id="route" d="${path(all)}" stroke="#5a9a5b" stroke-opacity="0" stroke-width="16" fill="none"/>`;
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     g += `<path d="${path(routeSlice(d, z.a, z.b))}" stroke="${ZONE_COL[z.z]}" stroke-opacity="${z.z === "go" ? .3 : .55}" stroke-width="12" stroke-linecap="${z.z === "go" ? "round" : "butt"}" stroke-linejoin="round" fill="none"/>`; });
@@ -686,7 +727,7 @@ function render(){
   OBST.push(js && js.kind === "ride" ? {x:wx-38,y:wy-44,w:76,h:46} : {x:wx-20,y:wy-50,w:40,h:52});
   const LBL = `<g pointer-events="none">${placeLabels()}</g>`;   // full-strength text sits over the squirrels, faded text under them
   if (S.txt !== 0) g += LBL;
-  const routePx = d.pts.slice(1).reduce((a,p,i) => { const q = scr(d.pts[i].ll), r = scr(p.ll); return a + Math.hypot(r[0]-q[0], r[1]-q[1]); }, 0);
+  const routePx = all.slice(1).reduce((a,r,i) => a + Math.hypot(r[0]-all[i][0], r[1]-all[i][1]), 0);
   const pxPerKm = routePx / Math.max(total(d), 0.1);
   const s1 = Math.min(36, Math.max(16, pxPerKm*0.45)), s2 = Math.min(68, Math.max(31, pxPerKm*0.85));   // closer together when zoomed out
   const behind = (dist) => { // a point `dist` px back along today's route; if the route runs out, wait at its start
@@ -867,11 +908,12 @@ const ptrs = new Map(); let mode = null, start = null;
 const local = e => { const r = svg.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 function nearestOn(d, p){
   let best = {dist:Infinity, km:0};
-  for (let i=0;i<d.pts.length-1;i++){
-    const a = scr(d.pts[i].ll), b = scr(d.pts[i+1].ll), vx = b[0]-a[0], vy = b[1]-a[1], l2 = vx*vx+vy*vy || 1;
+  const g = geomOf(d);
+  for (let i=0;i<g.length-1;i++){
+    const a = scr(g[i].ll), b = scr(g[i+1].ll), vx = b[0]-a[0], vy = b[1]-a[1], l2 = vx*vx+vy*vy || 1;
     let f = ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/l2; f = Math.max(0, Math.min(1, f));
     const dd = Math.hypot(p[0]-(a[0]+f*vx), p[1]-(a[1]+f*vy));
-    if (dd < best.dist) best = {dist:dd, km: d.pts[i].km + f*(d.pts[i+1].km - d.pts[i].km)};
+    if (dd < best.dist) best = {dist:dd, km: g[i].km + f*(g[i+1].km - g[i].km)};
   }
   return best;
 }
@@ -923,14 +965,22 @@ function zoomAt(p, f){ const k = Math.min(Math.max(V.k*f, K_MIN), K_MAX), wx = (
 $("zin").onclick = () => zoomAt([W/2,H/2], 1.5);
 const TXT_STATES = [["👁️","shown"], ["🙈","hidden"], ["🌫️","faded to 50%"]];
 function txtButtons(){ const [ic, nm] = TXT_STATES[S.txt]; $("ztxt").textContent = ic; $("ztxt").setAttribute("aria-label", `Map text: ${nm}`); $("ztxt").title = `Map text: ${nm} (tap: shown → hidden → faded)`;
-  const pc = Math.round(S.txtScale*100); $("zsize").textContent = pc + "%"; $("zsize").style.fontSize = "10.5px";
-  $("zsize").setAttribute("aria-label", `Map text size: ${pc}% (tap: 50 → 75 → 100%)`); $("zsize").title = `Map text size: ${pc}% (tap: 50 → 75 → 100%)`;
   const lg = $("legend"); lg.style.display = S.txt === 1 ? "none" : ""; lg.style.opacity = S.txt === 2 ? ".5" : ""; lg.style.fontSize = S.txtScale < 1 ? (S.txtScale < .6 ? "8px" : "9.5px") : ""; }
 $("ztxt").onclick = () => { S.txt = (S.txt + 1) % 3; txtButtons(); render(); };
-$("zsize").onclick = () => { S.txtScale = S.txtScale < .6 ? .75 : S.txtScale < .9 ? 1 : .5; txtButtons(); render(); };
+/* ☰ menu: how the walks are drawn, and map text size (both maps) */
+function menuSync(){
+  document.querySelectorAll("#mPaths button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.paths ? "true" : "false"));
+  document.querySelectorAll("#mSize button").forEach(b => b.setAttribute("aria-pressed", Math.abs(+b.dataset.v - S.txtScale) < .01 ? "true" : "false"));
+  $("lgOsm").hidden = S.paths !== "walk"; $("zmenu").setAttribute("aria-expanded", $("menu").hidden ? "false" : "true"); }
+const menuShow = on => { $("menu").hidden = !on; menuSync(); };
+$("zmenu").onclick = () => menuShow($("menu").hidden);
+document.querySelectorAll("#mPaths button").forEach(b => b.onclick = () => { S.paths = b.dataset.v; savePrefs(); menuSync(); render(); });
+document.querySelectorAll("#mSize button").forEach(b => b.onclick = () => { S.txtScale = +b.dataset.v; savePrefs(); menuSync(); txtButtons(); render(); });
+document.addEventListener("pointerdown", e => { if (!$("menu").hidden && !$("menu").contains(e.target) && !$("zmenu").contains(e.target)) menuShow(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("menu").hidden) { menuShow(false); $("zmenu").focus(); } });
 $("zout").onclick = () => zoomAt([W/2,H/2], 1/1.5);
-$("zday").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(D().pts.map(p => p.ll)).pad(.15)); return; } fitDay(); render(); };
-$("ztrip").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(ORDER.flatMap(k => dayObj(k).pts.map(p => p.ll))).pad(.05)); return; } fitTrip(); render(); };
+$("zday").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(lineLL(D())).pad(.15)); return; } fitDay(); render(); };
+$("ztrip").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(ORDER.flatMap(k => lineLL(dayObj(k)))).pad(.05)); return; } fitTrip(); render(); };
 $("zlive").onclick = () => { setLive(!LIVE); $("legend").classList.toggle("live", LIVE); };
 $("zgps").onclick = () => { geoStart(); if (GEO) { LMAP.setView(GEO.ll, Math.max(LMAP.getZoom(), 15)); } else liveToast("Finding you… allow location if your browser asks."); };
 $("tlBtn").onclick = () => { $("tlSheet").hidden = false; };
@@ -985,18 +1035,17 @@ function liveInit(){
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
+  LMAP.attributionControl.addAttribution('trail <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>');
   return true;
 }
 
-/* lat/lng slice of a day's walk between two km marks */
-function sliceLL(d, a, b){ const out = [llAt(d, a)]; d.pts.forEach(p => { if (p.km > a && p.km < b) out.push(p.ll); }); out.push(llAt(d, b)); return out; }
-
-/* nearest point on a day's walk to a lat/lng → {km, dist (m)} (straight lines between stops) */
+/* nearest point on a day's walk to a lat/lng → {km, dist (m)}, along the drawn path (walking path or straight lines) */
 function snapToDay(d, ll){
   const kx = 111320 * Math.cos(ll[0] * Math.PI/180), ky = 110540;   // metres per degree
   let best = {km: 0, dist: 1e12};
-  for (let i = 0; i < d.pts.length - 1; i++){
-    const a = d.pts[i], b = d.pts[i+1];
+  const g = geomOf(d);
+  for (let i = 0; i < g.length - 1; i++){
+    const a = g[i], b = g[i+1];
     const ax = (a.ll[1]-ll[1])*kx, ay = (a.ll[0]-ll[0])*ky, bx = (b.ll[1]-ll[1])*kx, by = (b.ll[0]-ll[0])*ky;
     const vx = bx-ax, vy = by-ay, L2 = vx*vx + vy*vy || 1, f = Math.min(Math.max(-(ax*vx + ay*vy)/L2, 0), 1);
     const dist = Math.hypot(ax + f*vx, ay + f*vy);
@@ -1064,7 +1113,7 @@ function drawLive(){
   const selKey = S.day === "d4" ? "d4"+S.course : S.day;
   // other days, faded
   ORDER.forEach(k => { const o = dayObj(k); if (o === d) return;
-    LF.polyline(o.pts.map(p => p.ll), {color: "#5a9a5b", weight: 4, opacity: .35, dashArray: "2 7"}).addTo(LLAYER)
+    LF.polyline(lineLL(o), {color: "#5a9a5b", weight: 4, opacity: .35, dashArray: "2 7"}).addTo(LLAYER)
       .bindTooltip(o.chip, {sticky: true}); });
   // planned tour transport
   TOUR.forEach(t => { if ((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course) return;
@@ -1072,7 +1121,7 @@ function drawLive(){
   // today's walk, coloured by escape options
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     LF.polyline(sliceLL(d, z.a, z.b), {color: ZONE_COL[z.z], weight: 9, opacity: z.z === "go" ? .55 : .75, lineCap: "butt"}).addTo(LLAYER); });
-  LF.polyline(d.pts.map(p => p.ll), {color: "#3b2f2a", weight: 1.5, opacity: .7, dashArray: "4 5"}).addTo(LLAYER);
+  LF.polyline(lineLL(d), {color: "#3b2f2a", weight: 1.5, opacity: .7, dashArray: "4 5"}).addTo(LLAYER);
   if (km > 0.01) LF.polyline(sliceLL(d, 0, km), {color: "#fff", weight: 3, opacity: .9}).addTo(LLAYER);
   const js = segAt(d, S.t), pre = !js && d.transfer && S.t < startOf(d), opt = !js && !pre;
   if (opt && fwd && fwd.dist > 0.05) LF.polyline(sliceLL(d, km, fwd.p.km), {color: "#2e8b3e", weight: 4}).addTo(LLAYER);
@@ -1111,7 +1160,7 @@ function drawLive(){
     dot.bindPopup(`<div class="live-pop"><b>You are here</b><br><span class="fine">±${Math.round(GEO.acc)} m · ${near.dist < 1000 ? Math.round(near.dist) + " m" : (near.dist/1000).toFixed(1) + " km"} from the ${esc(dayObj(near.day).chip)} trail</span><br><button type="button" class="live-set">📍 Set position &amp; time to here</button><div class="fine">Keeps today's start time and works out your pace.</div></div>`);
     dot.on("popupopen", e => { const b = e.popup.getElement().querySelector(".live-set"); if (b) b.onclick = () => { LMAP.closePopup(); setHere(GEO.ll); }; });
   }
-  if (!LIVE_FITTED){ LIVE_FITTED = true; LMAP.fitBounds(LF.latLngBounds(d.pts.map(p => p.ll)).pad(.15)); }
+  if (!LIVE_FITTED){ LIVE_FITTED = true; LMAP.fitBounds(LF.latLngBounds(lineLL(d)).pad(.15)); }
 }
 
 function setLive(on){
@@ -1131,7 +1180,7 @@ new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => {
   const cx = unscr([W/2, H/2]), rel = V.k / K_MIN;
   sizeMap(); V.k = rel * K_MIN; V.tx = W/2 - cx[0]*V.k; V.ty = H/2 - cx[1]*V.k; clampView(); render();
 }, 60); }).observe(wrap);
-txtButtons(); setFromTime(hm("10:30")); drawChips(); sync(); sizeMap(); fitDay(); render();
+txtButtons(); menuSync(); setFromTime(hm("10:30")); drawChips(); sync(); sizeMap(); fitDay(); render();
 const hint = $("hint"); hint.style.left = WALKER[0] + "px"; hint.style.top = (WALKER[1] - 52) + "px";
 setTimeout(() => hint.style.opacity = 0, 4500);
 started = true;

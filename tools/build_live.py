@@ -31,14 +31,14 @@ rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate
   .livetoast{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;max-width:min(92%,520px);background:#2b231e;color:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)}
   .leaflet-container{font:inherit}
 </style>''')
-rep('$("zday").onclick = () => { fitDay(); render(); };', '$("zday").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(D().pts.map(p => p.ll)).pad(.15)); return; } fitDay(); render(); };')
-rep('$("ztrip").onclick = () => { fitTrip(); render(); };', r'''$("ztrip").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(ORDER.flatMap(k => dayObj(k).pts.map(p => p.ll))).pad(.05)); return; } fitTrip(); render(); };
+rep('$("zday").onclick = () => { fitDay(); render(); };', '$("zday").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(lineLL(D())).pad(.15)); return; } fitDay(); render(); };')
+rep('$("ztrip").onclick = () => { fitTrip(); render(); };', r'''$("ztrip").onclick = () => { if (LIVE) { LMAP.fitBounds(LF.latLngBounds(ORDER.flatMap(k => lineLL(dayObj(k)))).pad(.05)); return; } fitTrip(); render(); };
 $("zlive").onclick = () => { setLive(!LIVE); $("legend").classList.toggle("live", LIVE); };
 $("zgps").onclick = () => { geoStart(); if (GEO) { LMAP.setView(GEO.ll, Math.max(LMAP.getZoom(), 15)); } else liveToast("Finding you… allow location if your browser asks."); };''')
 rep("  renderText(fwd, back);\n}", "  renderText(fwd, back);\n  if (LIVE && !LDRAG) drawLive();\n}")
 rep("/* ---------- start ---------- */", addon + "\n/* ---------- start ---------- */")
 rep('<h2>How this works</h2>', '''<h2>How this works</h2>
-      <p><b>🗺️ Live map:</b> swaps the sketch for a real Japanese topographic map (GSI, or OpenStreetMap / aerial photo from the layer button) with your location as a blue dot. Tap the dot → <b>Set position &amp; time to here</b>: the squirrels jump to the nearest point on the trail, the clock jumps to now, today's start time stays put and the pace is worked out from how far you've come. The trail is drawn as straight lines between stops, so follow the signposts and the map's own paths on the ground.</p>''')
+      <p><b>🗺️ Live map:</b> swaps the sketch for a real Japanese topographic map (GSI, or OpenStreetMap / aerial photo from the layer button) with your location as a blue dot. Tap the dot → <b>Set position &amp; time to here</b>: the squirrels jump to the nearest point on the trail, the clock jumps to now, today's start time stays put and the pace is worked out from how far you've come. The trail line comes from OpenStreetMap (or straight lines, from ☰), so on the ground follow the signposts and your Walk Japan notes.</p>''')
 rep('<input type="range" id="pace" min="12" max="45"', '<input type="range" id="pace" min="12" max="60"')
 (ROOT / "index.html").write_text(s, encoding="utf-8")
 print("built index.html", len(s), "bytes")

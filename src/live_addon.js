@@ -16,18 +16,17 @@ function liveInit(){
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
+  LMAP.attributionControl.addAttribution('trail <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>');
   return true;
 }
 
-/* lat/lng slice of a day's walk between two km marks */
-function sliceLL(d, a, b){ const out = [llAt(d, a)]; d.pts.forEach(p => { if (p.km > a && p.km < b) out.push(p.ll); }); out.push(llAt(d, b)); return out; }
-
-/* nearest point on a day's walk to a lat/lng → {km, dist (m)} (straight lines between stops) */
+/* nearest point on a day's walk to a lat/lng → {km, dist (m)}, along the drawn path (walking path or straight lines) */
 function snapToDay(d, ll){
   const kx = 111320 * Math.cos(ll[0] * Math.PI/180), ky = 110540;   // metres per degree
   let best = {km: 0, dist: 1e12};
-  for (let i = 0; i < d.pts.length - 1; i++){
-    const a = d.pts[i], b = d.pts[i+1];
+  const g = geomOf(d);
+  for (let i = 0; i < g.length - 1; i++){
+    const a = g[i], b = g[i+1];
     const ax = (a.ll[1]-ll[1])*kx, ay = (a.ll[0]-ll[0])*ky, bx = (b.ll[1]-ll[1])*kx, by = (b.ll[0]-ll[0])*ky;
     const vx = bx-ax, vy = by-ay, L2 = vx*vx + vy*vy || 1, f = Math.min(Math.max(-(ax*vx + ay*vy)/L2, 0), 1);
     const dist = Math.hypot(ax + f*vx, ay + f*vy);
@@ -95,7 +94,7 @@ function drawLive(){
   const selKey = S.day === "d4" ? "d4"+S.course : S.day;
   // other days, faded
   ORDER.forEach(k => { const o = dayObj(k); if (o === d) return;
-    LF.polyline(o.pts.map(p => p.ll), {color: "#5a9a5b", weight: 4, opacity: .35, dashArray: "2 7"}).addTo(LLAYER)
+    LF.polyline(lineLL(o), {color: "#5a9a5b", weight: 4, opacity: .35, dashArray: "2 7"}).addTo(LLAYER)
       .bindTooltip(o.chip, {sticky: true}); });
   // planned tour transport
   TOUR.forEach(t => { if ((t.day === "d4A" || t.day === "d4B") && t.day !== "d4"+S.course) return;
@@ -103,7 +102,7 @@ function drawLive(){
   // today's walk, coloured by escape options
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     LF.polyline(sliceLL(d, z.a, z.b), {color: ZONE_COL[z.z], weight: 9, opacity: z.z === "go" ? .55 : .75, lineCap: "butt"}).addTo(LLAYER); });
-  LF.polyline(d.pts.map(p => p.ll), {color: "#3b2f2a", weight: 1.5, opacity: .7, dashArray: "4 5"}).addTo(LLAYER);
+  LF.polyline(lineLL(d), {color: "#3b2f2a", weight: 1.5, opacity: .7, dashArray: "4 5"}).addTo(LLAYER);
   if (km > 0.01) LF.polyline(sliceLL(d, 0, km), {color: "#fff", weight: 3, opacity: .9}).addTo(LLAYER);
   const js = segAt(d, S.t), pre = !js && d.transfer && S.t < startOf(d), opt = !js && !pre;
   if (opt && fwd && fwd.dist > 0.05) LF.polyline(sliceLL(d, km, fwd.p.km), {color: "#2e8b3e", weight: 4}).addTo(LLAYER);
@@ -142,7 +141,7 @@ function drawLive(){
     dot.bindPopup(`<div class="live-pop"><b>You are here</b><br><span class="fine">±${Math.round(GEO.acc)} m · ${near.dist < 1000 ? Math.round(near.dist) + " m" : (near.dist/1000).toFixed(1) + " km"} from the ${esc(dayObj(near.day).chip)} trail</span><br><button type="button" class="live-set">📍 Set position &amp; time to here</button><div class="fine">Keeps today's start time and works out your pace.</div></div>`);
     dot.on("popupopen", e => { const b = e.popup.getElement().querySelector(".live-set"); if (b) b.onclick = () => { LMAP.closePopup(); setHere(GEO.ll); }; });
   }
-  if (!LIVE_FITTED){ LIVE_FITTED = true; LMAP.fitBounds(LF.latLngBounds(d.pts.map(p => p.ll)).pad(.15)); }
+  if (!LIVE_FITTED){ LIVE_FITTED = true; LMAP.fitBounds(LF.latLngBounds(lineLL(d)).pad(.15)); }
 }
 
 function setLive(on){
