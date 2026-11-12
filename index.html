@@ -141,7 +141,7 @@
   .live-set{appearance:none;margin:6px 0 4px;border:2px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
   .livetoast{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;max-width:min(92%,520px);background:#2b231e;color:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)}
   .leaflet-container{font:inherit}
-  .skypane{filter:blur(7px);opacity:.7}
+  .skypane{opacity:.4}   /* no CSS blur here: suspected of blanking the map on some Android phones */
   .qlab-icon{background:none;border:none}
   .qlab{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11.5px;font-weight:800;color:#7a5a40;text-shadow:0 0 2px #fbf6ec,0 0 4px #fbf6ec,0 0 6px #fbf6ec}
   .qlab small{font-size:10px;font-weight:700;color:#9a8270}
@@ -186,6 +186,7 @@
       <div class="mrow"><span>🥾 Paths</span><div class="toggle" id="mPaths" role="group" aria-label="How to draw the walks"><button type="button" data-v="walk">Walking path</button><button type="button" data-v="straight">Straight lines</button></div></div>
       <div class="mrow"><span>🗺️ Live map</span><div class="toggle" id="mBase" role="group" aria-label="Live map background"><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="pale">Pale</button><button type="button" data-v="topo">Topo</button><button type="button" data-v="photo">Aerial</button><button type="button" data-v="osm">OSM</button></div></div>
       <div class="mrow"><span>🌗 Daylight band</span><div class="toggle" id="mSky" role="group" aria-label="Daylight band along the walk"><button type="button" data-v="1">On</button><button type="button" data-v="0">Off</button></div></div>
+      <div class="fine" id="mStat">Map tiles: open 🗺️ to check.</div>
       <div class="fine">The daylight band shades the walk by the light when you'd be there: pale by day, amber in the afternoon, orange at sunset, purple at dusk, navy after dark. Walking paths follow the Nakasendo as mapped on OpenStreetMap, with OSM routing where the walk leaves it. © OpenStreetMap contributors.</div>
     </div>
     <div class="legend" id="legend">
@@ -414,6 +415,16 @@ function alongPoly(pts, f){ const L = [0]; for (let i = 1; i < pts.length; i++) 
   const want = Math.min(Math.max(f, 0), 1) * L.at(-1);
   for (let i = 1; i < pts.length; i++) if (L[i] >= want){ const g = (want - L[i-1]) / ((L[i] - L[i-1]) || 1); return [pts[i-1][0] + (pts[i][0]-pts[i-1][0])*g, pts[i-1][1] + (pts[i][1]-pts[i-1][1])*g]; }
   return pts.at(-1); }
+/* the stops a duck-out ride passes, start to finish */
+const rideNodes = o => [o.p.hop.at || o.p.ll, ...(o.p.hop.via || []), o.p.hop.toLL];
+/* are the keep-going and turn-back rides the same bus/train for the last part of the way? (e.g. Day 2: back to Nakatsugawa,
+   or on to Ochiai, both on the bus to Magome) → {nodes of the longer ride, k = where the shorter one gets on, long = that option} */
+function sharedRide(f, b){
+  if (!f || !b || f.p.hop.mode.split(" ")[0] !== b.p.hop.mode.split(" ")[0]) return null;
+  const nf = rideNodes(f), nb = rideNodes(b); if (!near(nf.at(-1), nb.at(-1))) return null;
+  let k = nb.findIndex(q => near(q, nf[0])); if (k > 0 && nb.length - k === nf.length) return {nodes:nb, k, long:b};
+  k = nf.findIndex(q => near(q, nb[0])); if (k > 0 && nf.length - k === nb.length) return {nodes:nf, k, long:f};
+  return null; }
 const D = () => S.day === "d4" ? DAYS["d4"+S.course] : DAYS[S.day];
 const dayObj = k => k === "d4" ? DAYS["d4"+S.course] : DAYS[k];
 
@@ -745,15 +756,31 @@ function render(){
       + `<path d="${dd}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#${marker})"/>`
       + stops.map(q => `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="${color}" stroke-width="2"/>`).join("")
       + `<circle cx="${to[0]}" cy="${to[1]}" r="6" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+    return out + hopExtras(o, side, true); };
+  const hopExtras = (o, side, withOn) => { const h = o.p.hop, to = scr(h.toLL); let out = "";
     if (o.dep != null && h.ride) addLabel(to[0], to[1], `${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${h.to} ~${fmt(o.dep + h.ride)}`, side > 0 ? "#2e8b3e" : "#c0700a", {pri:2, boxed:true, time:o.dep + h.ride});
-    if (h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
+    if (withOn && h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
       let a = to; h.on.forEach(n => { const b = scr(n.ll); out += `<path d="${bow(a, b).d}" stroke="#6f6259" stroke-width="1.5" stroke-opacity=".85" stroke-linecap="round" fill="none"/><circle cx="${b[0]}" cy="${b[1]}" r="3" fill="#6f6259"/>`; a = b; });
       addLabel(a[0], a[1], `same ${h.mode.split(" ")[0]} on to ${h.on.at(-1).name}${h.est ? " ≈" : ""}`, "#6f6259", {pri:1, size:10}); }
     return out; };
-  if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
+  const rideF = fwd && opt && !fwd.noBus && !isTourLeg(fwd), rideB = back && !back.off && opt && (!fwd || back.p !== fwd.p) && !isTourLeg(back);
+  const shared = rideF && rideB ? sharedRide(fwd, back) : null;
+  if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus && !shared) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
   if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (back.p.hop.at) g += `<path d="${path([scr(back.p.ll), scr(back.p.hop.at)])}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
-    if (!fwd || back.p !== fwd.p) g += hopLine(back, -1, "#e08a12", "arrB"); }
+    if (rideB && !shared) g += hopLine(back, -1, "#e08a12", "arrB"); }
+  if (shared){   // both ways out end up on the same bus/train: one line, orange-and-green where they share it
+    const N = 10, pts = shared.nodes.map(scr), poly = smoothThrough(pts, N), cut = shared.k * N, own = shared.long === fwd ? "#2e8b3e" : "#e08a12";
+    const P1 = path(poly.slice(0, cut + 1)), P2 = path(poly.slice(cut)), to = pts.at(-1);
+    g += `<path d="${path(poly)}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${P1}" stroke="${own}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${P2}" stroke="#e08a12" stroke-width="4" stroke-dasharray="9 9" stroke-dashoffset="9" fill="none" stroke-linejoin="round"/>`
+      + `<path d="${P2}" stroke="#2e8b3e" stroke-width="4" stroke-dasharray="9 9" fill="none" stroke-linejoin="round" marker-end="url(#arrF)"/>`
+      + pts.slice(1, -1).map((q, i) => i + 1 < shared.k ? `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="${own}" stroke-width="2"/>`
+          : `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="4.5" fill="#fff" stroke="#e08a12" stroke-width="2"/><circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2" fill="#2e8b3e"/>`).join("")
+      + `<circle cx="${to[0]}" cy="${to[1]}" r="6.5" fill="#2e8b3e" stroke="#e08a12" stroke-width="2.5"/>`
+      + hopExtras(fwd, 1, true) + hopExtras(back, -1, false);
+  }
   // points of today
   d.pts.forEach(p => { const [x,y] = scr(p.ll);
     if (p.kind === "pass") g += `<path d="M${x-11} ${y+8}L${x} ${y-11}L${x+11} ${y+8}z" fill="#a7c79c" stroke="#5a9a5b" stroke-width="2"/><path d="M${x-4} ${y-4}L${x} ${y-11}L${x+4} ${y-4}z" fill="#fff"/>`;
@@ -1029,7 +1056,7 @@ function menuSync(){
   document.querySelectorAll("#mPaths button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.paths ? "true" : "false"));
   document.querySelectorAll("#mSky button").forEach(b => b.setAttribute("aria-pressed", (b.dataset.v === "1") === S.sky ? "true" : "false"));
   $("lgSky").hidden = !S.sky; document.querySelectorAll("#mBase button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.base ? "true" : "false")); $("lgOsm").hidden = S.paths !== "walk"; $("zmenu").setAttribute("aria-expanded", $("menu").hidden ? "false" : "true"); }
-const menuShow = on => { $("menu").hidden = !on; menuSync(); };
+const menuShow = on => { $("menu").hidden = !on; menuSync(); if (on && typeof statusLine === "function") statusLine(); };
 $("zmenu").onclick = () => menuShow($("menu").hidden);
 document.querySelectorAll("#mPaths button").forEach(b => b.onclick = () => { S.paths = b.dataset.v; savePrefs(); menuSync(); render(); });
 document.querySelectorAll("#mBase button").forEach(b => b.onclick = () => { S.base = b.dataset.v; savePrefs(); menuSync(); if (LIVE) setBase(S.base); });
@@ -1139,18 +1166,18 @@ function nearTrail(ll, m){
 const QUIET_URL = (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${z}/${x}/${y}.pbf`;
 const GSI_ATTR = '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>';
 function makeQuietLayer(){
-  const labels = LF.layerGroup(), byTile = new Map(), live = new Map(), stat = {ok: 0, bad: 0, err: ""};
-  const failed = e => { stat.bad++; stat.err = stat.err || String(e && e.message || e);
-    if (stat.ok === 0 && stat.bad >= 4 && BASE_ON === q){   // nothing has drawn: don't leave a blank map
-      setBase("pale", true); liveToast(`The Quiet map couldn't load here (${stat.err}), so I've switched to Pale. ☰ → Live map to change.`); } };
+  const labels = LF.layerGroup(), byTile = new Map(), live = new Map(), stat = tileStat("quiet");
   const Q = LF.GridLayer.extend({
     createTile(c, done){
       const cv = document.createElement("canvas"), r = Math.min(window.devicePixelRatio || 1, 2), sz = this.getTileSize();
       cv.width = sz.x * r; cv.height = sz.y * r;
       const ctx = cv.getContext("2d"); ctx.fillStyle = "#fbf6ec"; ctx.fillRect(0, 0, cv.width, cv.height);
-      fetch(QUIET_URL(c.z, c.x, c.y)).then(res => { if (res.status === 404) return null; if (!res.ok) throw new Error("tile HTTP " + res.status); return res.arrayBuffer(); }).then(buf => {
-        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); stat.ok++; done(null, cv);
-      }).catch(e => { failed(e); done(null, cv); });
+      stat.wait++; let settled = false;
+      const finish = e => { if (settled) return; settled = true; stat.wait--; if (e) tileFailed("quiet", e); else { stat.ok++; tileOk(); } done(null, cv); };
+      const ac = window.AbortController ? new AbortController() : null, timer = setTimeout(() => { if (ac) ac.abort(); finish(new Error("timed out")); }, 15000);
+      fetch(QUIET_URL(c.z, c.x, c.y), ac ? {signal: ac.signal} : {}).then(res => { if (res.status === 404) return null; if (!res.ok) throw new Error("tile HTTP " + res.status); return res.arrayBuffer(); }).then(buf => {
+        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); clearTimeout(timer); finish();
+      }).catch(e => { clearTimeout(timer); finish(e); });
       return cv; },
     onAdd(map){ LF.GridLayer.prototype.onAdd.call(this, map); labels.addTo(map); },
     onRemove(map){ LF.GridLayer.prototype.onRemove.call(this, map); map.removeLayer(labels); }
@@ -1183,6 +1210,23 @@ function quietDraw(ctx, Ls, px, r, c, layer, labels, byTile, live){
 }
 
 let BASES = null, BASE_ON = null, SKYR = null;
+/* tile health per background, shown in ☰ so a blank map can be diagnosed on the phone itself */
+const TILES = {};
+const tileStat = k => TILES[k] = TILES[k] || {ok: 0, bad: 0, wait: 0, err: ""};
+const FALLBACK = {quiet: "pale", pale: "osm", topo: "osm", photo: "osm"};
+function tileOk(){ statusLine(); }
+function tileFailed(k, e){ const st = tileStat(k); st.bad++; st.err = st.err || String(e && e.message || e || "tile error"); statusLine();
+  if (st.ok === 0 && st.bad >= 4 && BASES && BASE_ON === BASES[k] && FALLBACK[k]){   // nothing has drawn: don't leave a blank map
+    const nx = FALLBACK[k]; setBase(nx, true); liveToast(`The ${k} map couldn't load here (${st.err}), so I've switched to ${nx}. ☰ → Live map to change.`); } }
+function statusLine(){ const el = $("mStat"); if (!el || !LMAP) return;
+  const on = Object.keys(BASES || {}).find(k => BASES[k] === BASE_ON);
+  el.textContent = "Map tiles: " + (Object.entries(TILES).filter(([k, s]) => k === on || s.ok || s.bad).map(([k, s]) =>
+    `${k}${k === on ? " (on)" : ""} ${s.ok} shown, ${s.bad} failed, ${s.wait} waiting${s.err ? ` – ${s.err}` : ""}`).join(" · ") || "none yet"); }
+function watchTiles(k, layer){ const st = tileStat(k);
+  layer.on("tileloadstart", () => { st.wait++; statusLine(); });
+  layer.on("tileload", () => { st.wait = Math.max(0, st.wait - 1); st.ok++; tileOk(); });
+  layer.on("tileerror", () => { st.wait = Math.max(0, st.wait - 1); tileFailed(k, "image failed"); });
+  return layer; }
 function setBase(k, auto){
   if (!LMAP) return;
   const b = BASES[k] || BASES.quiet; if (b === BASE_ON) return;
@@ -1198,10 +1242,10 @@ function liveInit(){
   SKYR = LF.svg({pane: "sky", padding: .5});
   BASES = {
     quiet: makeQuietLayer(),
-    pale: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
-    topo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
-    photo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: GSI_ATTR}),
-    osm: LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'})
+    pale: watchTiles("pale", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR})),
+    topo: watchTiles("topo", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR})),
+    photo: watchTiles("photo", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: GSI_ATTR})),
+    osm: watchTiles("osm", LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}))
   };
   setBase(S.base);
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
@@ -1292,7 +1336,7 @@ function drawLive(){
     LF.polyline([t.a, ...(t.via || []), t.b], {color: "#3d5a99", weight: t.day === selKey ? 4 : 2.5, opacity: t.day === selKey ? .9 : .4, dashArray: "1 8", lineCap: "round"}).addTo(LLAYER); });
   // the daylight band (blurred by CSS on its pane), under everything else
   if (S.sky){ const q = skySamples(d, 120);
-    for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 34, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
+    for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 30, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
   // today's walk, coloured by escape options
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     LF.polyline(sliceLL(d, z.a, z.b), {color: ZONE_COL[z.z], weight: 9, opacity: z.z === "go" ? .55 : .75, lineCap: "butt"}).addTo(LLAYER); });
@@ -1330,8 +1374,22 @@ function drawLive(){
     if (h.on?.length){ LF.polyline([b, ...h.on.map(n => n.ll)], {color: "#6f6259", weight: 1.5, opacity: .85, interactive: false}).addTo(LLAYER);
       const last = h.on.at(-1); LF.circleMarker(last.ll, {radius: 3, color: "#6f6259", weight: 1, fillColor: "#6f6259", fillOpacity: 1}).addTo(LLAYER)
         .bindTooltip(`same ${h.mode.split(" ")[0]} on to ${esc(last.name)}${h.est ? " ≈" : ""}`, {direction: "right"}); } };
-  if (opt && fwd && !fwd.noBus) rideLine(fwd, 1, "#2e8b3e");
-  if (opt && back && !back.off && (!fwd || back.p !== fwd.p)) rideLine(back, -1, "#e08a12");
+  const rideF = opt && fwd && !fwd.noBus && !tourLeg(fwd), rideB = opt && back && !back.off && (!fwd || back.p !== fwd.p) && !tourLeg(back);
+  const shared = rideF && rideB ? sharedRide(fwd, back) : null;
+  if (shared){   // both ways out end up on the same bus/train: one line, orange-and-green where they share it
+    const N = 10, poly = smoothThrough(shared.nodes, N), cut = shared.k * N, own = shared.long === fwd ? "#2e8b3e" : "#e08a12";
+    LF.polyline(poly, {color: "#fffdf8", weight: 7, opacity: .9, interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(0, cut + 1), {color: own, weight: 4, dashArray: "9 6", interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(cut), {color: "#e08a12", weight: 4, dashArray: "9 9", dashOffset: "9", lineCap: "butt", interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(cut), {color: "#2e8b3e", weight: 4, dashArray: "9 9", lineCap: "butt", interactive: false}).addTo(LLAYER);
+    shared.nodes.slice(1, -1).forEach((v, i) => LF.circleMarker(v, {radius: 4, color: i + 1 < shared.k ? own : "#e08a12", weight: 2, fillColor: i + 1 < shared.k ? "#fff" : "#2e8b3e", fillOpacity: 1, interactive: false}).addTo(LLAYER));
+    const end = LF.circleMarker(shared.nodes.at(-1), {radius: 7, color: "#e08a12", weight: 2.5, fillColor: "#2e8b3e", fillOpacity: 1}).addTo(LLAYER);
+    const tip = (o, side) => o.dep != null && o.p.hop.ride ? `${side > 0 ? "➡️" : "↩️"} ${o.p.hop.mode.split(" ")[0]} at ${esc(o.p.hop.to)} ~${fmt(o.dep + o.p.hop.ride)}` : "";
+    end.bindTooltip([tip(fwd, 1), tip(back, -1)].filter(Boolean).join("<br>"), {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (S.txt === 2 ? " faded" : "")});
+  } else {
+    if (rideF) rideLine(fwd, 1, "#2e8b3e");
+    if (rideB) rideLine(back, -1, "#e08a12");
+  }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
   let ll = llAt(d, km), icon = iconSquirrels(), drag = true;

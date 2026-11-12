@@ -30,7 +30,7 @@ rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate
   .live-set{appearance:none;margin:6px 0 4px;border:2px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
   .livetoast{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;max-width:min(92%,520px);background:#2b231e;color:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)}
   .leaflet-container{font:inherit}
-  .skypane{filter:blur(7px);opacity:.7}
+  .skypane{opacity:.4}   /* no CSS blur here: suspected of blanking the map on some Android phones */
   .qlab-icon{background:none;border:none}
   .qlab{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11.5px;font-weight:800;color:#7a5a40;text-shadow:0 0 2px #fbf6ec,0 0 4px #fbf6ec,0 0 6px #fbf6ec}
   .qlab small{font-size:10px;font-weight:700;color:#9a8270}
@@ -43,6 +43,9 @@ rep("  renderText(fwd, back);\n}", "  renderText(fwd, back);\n  if (LIVE && !LDR
 rep("/* ---------- start ---------- */", addon + "\n/* ---------- start ---------- */")
 rep('''      <div class="mrow"><span>🌗 Daylight band</span>''', '''      <div class="mrow"><span>🗺️ Live map</span><div class="toggle" id="mBase" role="group" aria-label="Live map background"><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="pale">Pale</button><button type="button" data-v="topo">Topo</button><button type="button" data-v="photo">Aerial</button><button type="button" data-v="osm">OSM</button></div></div>
       <div class="mrow"><span>🌗 Daylight band</span>''')
+rep('''      <div class="fine">The daylight band shades''', '''      <div class="fine" id="mStat">Map tiles: open 🗺️ to check.</div>
+      <div class="fine">The daylight band shades''')
+rep('''const menuShow = on => { $("menu").hidden = !on; menuSync(); };''', '''const menuShow = on => { $("menu").hidden = !on; menuSync(); if (on && typeof statusLine === "function") statusLine(); };''')
 rep('''  $("lgSky").hidden = !S.sky;''', '''  $("lgSky").hidden = !S.sky; document.querySelectorAll("#mBase button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.base ? "true" : "false"));''')
 rep('''document.querySelectorAll("#mSky button").forEach(b => b.onclick''', '''document.querySelectorAll("#mBase button").forEach(b => b.onclick = () => { S.base = b.dataset.v; savePrefs(); menuSync(); if (LIVE) setBase(S.base); });
 document.querySelectorAll("#mSky button").forEach(b => b.onclick''')

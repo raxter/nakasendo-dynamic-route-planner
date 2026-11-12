@@ -391,6 +391,16 @@ function alongPoly(pts, f){ const L = [0]; for (let i = 1; i < pts.length; i++) 
   const want = Math.min(Math.max(f, 0), 1) * L.at(-1);
   for (let i = 1; i < pts.length; i++) if (L[i] >= want){ const g = (want - L[i-1]) / ((L[i] - L[i-1]) || 1); return [pts[i-1][0] + (pts[i][0]-pts[i-1][0])*g, pts[i-1][1] + (pts[i][1]-pts[i-1][1])*g]; }
   return pts.at(-1); }
+/* the stops a duck-out ride passes, start to finish */
+const rideNodes = o => [o.p.hop.at || o.p.ll, ...(o.p.hop.via || []), o.p.hop.toLL];
+/* are the keep-going and turn-back rides the same bus/train for the last part of the way? (e.g. Day 2: back to Nakatsugawa,
+   or on to Ochiai, both on the bus to Magome) → {nodes of the longer ride, k = where the shorter one gets on, long = that option} */
+function sharedRide(f, b){
+  if (!f || !b || f.p.hop.mode.split(" ")[0] !== b.p.hop.mode.split(" ")[0]) return null;
+  const nf = rideNodes(f), nb = rideNodes(b); if (!near(nf.at(-1), nb.at(-1))) return null;
+  let k = nb.findIndex(q => near(q, nf[0])); if (k > 0 && nb.length - k === nf.length) return {nodes:nb, k, long:b};
+  k = nf.findIndex(q => near(q, nb[0])); if (k > 0 && nf.length - k === nb.length) return {nodes:nf, k, long:f};
+  return null; }
 const D = () => S.day === "d4" ? DAYS["d4"+S.course] : DAYS[S.day];
 const dayObj = k => k === "d4" ? DAYS["d4"+S.course] : DAYS[k];
 
@@ -722,15 +732,31 @@ function render(){
       + `<path d="${dd}" stroke="${color}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#${marker})"/>`
       + stops.map(q => `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="${color}" stroke-width="2"/>`).join("")
       + `<circle cx="${to[0]}" cy="${to[1]}" r="6" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+    return out + hopExtras(o, side, true); };
+  const hopExtras = (o, side, withOn) => { const h = o.p.hop, to = scr(h.toLL); let out = "";
     if (o.dep != null && h.ride) addLabel(to[0], to[1], `${side > 0 ? "➡️" : "↩️"} ${h.mode.split(" ")[0]} at ${h.to} ~${fmt(o.dep + h.ride)}`, side > 0 ? "#2e8b3e" : "#c0700a", {pri:2, boxed:true, time:o.dep + h.ride});
-    if (h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
+    if (withOn && h.on?.length){   // the same train runs on to further stops of the journey: thin grey line, no change needed
       let a = to; h.on.forEach(n => { const b = scr(n.ll); out += `<path d="${bow(a, b).d}" stroke="#6f6259" stroke-width="1.5" stroke-opacity=".85" stroke-linecap="round" fill="none"/><circle cx="${b[0]}" cy="${b[1]}" r="3" fill="#6f6259"/>`; a = b; });
       addLabel(a[0], a[1], `same ${h.mode.split(" ")[0]} on to ${h.on.at(-1).name}${h.est ? " ≈" : ""}`, "#6f6259", {pri:1, size:10}); }
     return out; };
-  if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
+  const rideF = fwd && opt && !fwd.noBus && !isTourLeg(fwd), rideB = back && !back.off && opt && (!fwd || back.p !== fwd.p) && !isTourLeg(back);
+  const shared = rideF && rideB ? sharedRide(fwd, back) : null;
+  if (fwd && opt){ if (fwd.dist > 0.05) g += `<path d="${path(routeSlice(d,km,fwd.p.km))}" stroke="#2e8b3e" stroke-width="5" stroke-linecap="round" fill="none"/>`; if (!fwd.noBus && !shared) g += hopLine(fwd, 1, "#2e8b3e", "arrF"); }
   if (back && !back.off && opt){ g += `<path d="${path(routeSlice(d,back.p.km,km))}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
     if (back.p.hop.at) g += `<path d="${path([scr(back.p.ll), scr(back.p.hop.at)])}" stroke="#e08a12" stroke-width="4" stroke-dasharray="7 6" fill="none"/>`;
-    if (!fwd || back.p !== fwd.p) g += hopLine(back, -1, "#e08a12", "arrB"); }
+    if (rideB && !shared) g += hopLine(back, -1, "#e08a12", "arrB"); }
+  if (shared){   // both ways out end up on the same bus/train: one line, orange-and-green where they share it
+    const N = 10, pts = shared.nodes.map(scr), poly = smoothThrough(pts, N), cut = shared.k * N, own = shared.long === fwd ? "#2e8b3e" : "#e08a12";
+    const P1 = path(poly.slice(0, cut + 1)), P2 = path(poly.slice(cut)), to = pts.at(-1);
+    g += `<path d="${path(poly)}" stroke="#fffdf8" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${P1}" stroke="${own}" stroke-width="4" stroke-dasharray="9 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${P2}" stroke="#e08a12" stroke-width="4" stroke-dasharray="9 9" stroke-dashoffset="9" fill="none" stroke-linejoin="round"/>`
+      + `<path d="${P2}" stroke="#2e8b3e" stroke-width="4" stroke-dasharray="9 9" fill="none" stroke-linejoin="round" marker-end="url(#arrF)"/>`
+      + pts.slice(1, -1).map((q, i) => i + 1 < shared.k ? `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.5" fill="#fff" stroke="${own}" stroke-width="2"/>`
+          : `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="4.5" fill="#fff" stroke="#e08a12" stroke-width="2"/><circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2" fill="#2e8b3e"/>`).join("")
+      + `<circle cx="${to[0]}" cy="${to[1]}" r="6.5" fill="#2e8b3e" stroke="#e08a12" stroke-width="2.5"/>`
+      + hopExtras(fwd, 1, true) + hopExtras(back, -1, false);
+  }
   // points of today
   d.pts.forEach(p => { const [x,y] = scr(p.ll);
     if (p.kind === "pass") g += `<path d="M${x-11} ${y+8}L${x} ${y-11}L${x+11} ${y+8}z" fill="#a7c79c" stroke="#5a9a5b" stroke-width="2"/><path d="M${x-4} ${y-4}L${x} ${y-11}L${x+4} ${y-4}z" fill="#fff"/>`;

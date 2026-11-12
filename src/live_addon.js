@@ -62,18 +62,18 @@ function nearTrail(ll, m){
 const QUIET_URL = (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${z}/${x}/${y}.pbf`;
 const GSI_ATTR = '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル (GSI Japan)</a>';
 function makeQuietLayer(){
-  const labels = LF.layerGroup(), byTile = new Map(), live = new Map(), stat = {ok: 0, bad: 0, err: ""};
-  const failed = e => { stat.bad++; stat.err = stat.err || String(e && e.message || e);
-    if (stat.ok === 0 && stat.bad >= 4 && BASE_ON === q){   // nothing has drawn: don't leave a blank map
-      setBase("pale", true); liveToast(`The Quiet map couldn't load here (${stat.err}), so I've switched to Pale. ☰ → Live map to change.`); } };
+  const labels = LF.layerGroup(), byTile = new Map(), live = new Map(), stat = tileStat("quiet");
   const Q = LF.GridLayer.extend({
     createTile(c, done){
       const cv = document.createElement("canvas"), r = Math.min(window.devicePixelRatio || 1, 2), sz = this.getTileSize();
       cv.width = sz.x * r; cv.height = sz.y * r;
       const ctx = cv.getContext("2d"); ctx.fillStyle = "#fbf6ec"; ctx.fillRect(0, 0, cv.width, cv.height);
-      fetch(QUIET_URL(c.z, c.x, c.y)).then(res => { if (res.status === 404) return null; if (!res.ok) throw new Error("tile HTTP " + res.status); return res.arrayBuffer(); }).then(buf => {
-        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); stat.ok++; done(null, cv);
-      }).catch(e => { failed(e); done(null, cv); });
+      stat.wait++; let settled = false;
+      const finish = e => { if (settled) return; settled = true; stat.wait--; if (e) tileFailed("quiet", e); else { stat.ok++; tileOk(); } done(null, cv); };
+      const ac = window.AbortController ? new AbortController() : null, timer = setTimeout(() => { if (ac) ac.abort(); finish(new Error("timed out")); }, 15000);
+      fetch(QUIET_URL(c.z, c.x, c.y), ac ? {signal: ac.signal} : {}).then(res => { if (res.status === 404) return null; if (!res.ok) throw new Error("tile HTTP " + res.status); return res.arrayBuffer(); }).then(buf => {
+        if (buf) quietDraw(ctx, mvtDecode(buf), cv.width, r, c, this, labels, byTile, live); clearTimeout(timer); finish();
+      }).catch(e => { clearTimeout(timer); finish(e); });
       return cv; },
     onAdd(map){ LF.GridLayer.prototype.onAdd.call(this, map); labels.addTo(map); },
     onRemove(map){ LF.GridLayer.prototype.onRemove.call(this, map); map.removeLayer(labels); }
@@ -106,6 +106,23 @@ function quietDraw(ctx, Ls, px, r, c, layer, labels, byTile, live){
 }
 
 let BASES = null, BASE_ON = null, SKYR = null;
+/* tile health per background, shown in ☰ so a blank map can be diagnosed on the phone itself */
+const TILES = {};
+const tileStat = k => TILES[k] = TILES[k] || {ok: 0, bad: 0, wait: 0, err: ""};
+const FALLBACK = {quiet: "pale", pale: "osm", topo: "osm", photo: "osm"};
+function tileOk(){ statusLine(); }
+function tileFailed(k, e){ const st = tileStat(k); st.bad++; st.err = st.err || String(e && e.message || e || "tile error"); statusLine();
+  if (st.ok === 0 && st.bad >= 4 && BASES && BASE_ON === BASES[k] && FALLBACK[k]){   // nothing has drawn: don't leave a blank map
+    const nx = FALLBACK[k]; setBase(nx, true); liveToast(`The ${k} map couldn't load here (${st.err}), so I've switched to ${nx}. ☰ → Live map to change.`); } }
+function statusLine(){ const el = $("mStat"); if (!el || !LMAP) return;
+  const on = Object.keys(BASES || {}).find(k => BASES[k] === BASE_ON);
+  el.textContent = "Map tiles: " + (Object.entries(TILES).filter(([k, s]) => k === on || s.ok || s.bad).map(([k, s]) =>
+    `${k}${k === on ? " (on)" : ""} ${s.ok} shown, ${s.bad} failed, ${s.wait} waiting${s.err ? ` – ${s.err}` : ""}`).join(" · ") || "none yet"); }
+function watchTiles(k, layer){ const st = tileStat(k);
+  layer.on("tileloadstart", () => { st.wait++; statusLine(); });
+  layer.on("tileload", () => { st.wait = Math.max(0, st.wait - 1); st.ok++; tileOk(); });
+  layer.on("tileerror", () => { st.wait = Math.max(0, st.wait - 1); tileFailed(k, "image failed"); });
+  return layer; }
 function setBase(k, auto){
   if (!LMAP) return;
   const b = BASES[k] || BASES.quiet; if (b === BASE_ON) return;
@@ -121,10 +138,10 @@ function liveInit(){
   SKYR = LF.svg({pane: "sky", padding: .5});
   BASES = {
     quiet: makeQuietLayer(),
-    pale: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
-    topo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR}),
-    photo: LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: GSI_ATTR}),
-    osm: LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'})
+    pale: watchTiles("pale", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR})),
+    topo: watchTiles("topo", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png", {maxZoom: 18, attribution: GSI_ATTR})),
+    photo: watchTiles("photo", LF.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg", {maxZoom: 18, attribution: GSI_ATTR})),
+    osm: watchTiles("osm", LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}))
   };
   setBase(S.base);
   LF.control.zoom({position: "topleft"}).addTo(LMAP);
@@ -215,7 +232,7 @@ function drawLive(){
     LF.polyline([t.a, ...(t.via || []), t.b], {color: "#3d5a99", weight: t.day === selKey ? 4 : 2.5, opacity: t.day === selKey ? .9 : .4, dashArray: "1 8", lineCap: "round"}).addTo(LLAYER); });
   // the daylight band (blurred by CSS on its pane), under everything else
   if (S.sky){ const q = skySamples(d, 120);
-    for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 34, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
+    for (let i = 0; i < q.length-1; i++) LF.polyline([q[i].ll, q[i+1].ll], {pane: "sky", renderer: SKYR, color: q[i].col, weight: 30, opacity: 1, lineCap: "round", interactive: false}).addTo(LLAYER); }
   // today's walk, coloured by escape options
   timedZones(d, pace).forEach(z => { if (z.b - z.a < 0.01) return;
     LF.polyline(sliceLL(d, z.a, z.b), {color: ZONE_COL[z.z], weight: 9, opacity: z.z === "go" ? .55 : .75, lineCap: "butt"}).addTo(LLAYER); });
@@ -253,8 +270,22 @@ function drawLive(){
     if (h.on?.length){ LF.polyline([b, ...h.on.map(n => n.ll)], {color: "#6f6259", weight: 1.5, opacity: .85, interactive: false}).addTo(LLAYER);
       const last = h.on.at(-1); LF.circleMarker(last.ll, {radius: 3, color: "#6f6259", weight: 1, fillColor: "#6f6259", fillOpacity: 1}).addTo(LLAYER)
         .bindTooltip(`same ${h.mode.split(" ")[0]} on to ${esc(last.name)}${h.est ? " ≈" : ""}`, {direction: "right"}); } };
-  if (opt && fwd && !fwd.noBus) rideLine(fwd, 1, "#2e8b3e");
-  if (opt && back && !back.off && (!fwd || back.p !== fwd.p)) rideLine(back, -1, "#e08a12");
+  const rideF = opt && fwd && !fwd.noBus && !tourLeg(fwd), rideB = opt && back && !back.off && (!fwd || back.p !== fwd.p) && !tourLeg(back);
+  const shared = rideF && rideB ? sharedRide(fwd, back) : null;
+  if (shared){   // both ways out end up on the same bus/train: one line, orange-and-green where they share it
+    const N = 10, poly = smoothThrough(shared.nodes, N), cut = shared.k * N, own = shared.long === fwd ? "#2e8b3e" : "#e08a12";
+    LF.polyline(poly, {color: "#fffdf8", weight: 7, opacity: .9, interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(0, cut + 1), {color: own, weight: 4, dashArray: "9 6", interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(cut), {color: "#e08a12", weight: 4, dashArray: "9 9", dashOffset: "9", lineCap: "butt", interactive: false}).addTo(LLAYER);
+    LF.polyline(poly.slice(cut), {color: "#2e8b3e", weight: 4, dashArray: "9 9", lineCap: "butt", interactive: false}).addTo(LLAYER);
+    shared.nodes.slice(1, -1).forEach((v, i) => LF.circleMarker(v, {radius: 4, color: i + 1 < shared.k ? own : "#e08a12", weight: 2, fillColor: i + 1 < shared.k ? "#fff" : "#2e8b3e", fillOpacity: 1, interactive: false}).addTo(LLAYER));
+    const end = LF.circleMarker(shared.nodes.at(-1), {radius: 7, color: "#e08a12", weight: 2.5, fillColor: "#2e8b3e", fillOpacity: 1}).addTo(LLAYER);
+    const tip = (o, side) => o.dep != null && o.p.hop.ride ? `${side > 0 ? "➡️" : "↩️"} ${o.p.hop.mode.split(" ")[0]} at ${esc(o.p.hop.to)} ~${fmt(o.dep + o.p.hop.ride)}` : "";
+    end.bindTooltip([tip(fwd, 1), tip(back, -1)].filter(Boolean).join("<br>"), {permanent: S.txt !== 1, direction: "right", className: "live-tip" + (S.txt === 2 ? " faded" : "")});
+  } else {
+    if (rideF) rideLine(fwd, 1, "#2e8b3e");
+    if (rideB) rideLine(back, -1, "#e08a12");
+  }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
   let ll = llAt(d, km), icon = iconSquirrels(), drag = true;
