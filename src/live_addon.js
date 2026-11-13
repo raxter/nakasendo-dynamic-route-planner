@@ -215,7 +215,7 @@ function iconSquirrels(){
   return LF.divIcon({className: "sq-icon", iconSize: [96, 66], iconAnchor: [74, 62],
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
-function iconPin(rain, elev){ return LF.divIcon({className: "sq-icon", iconSize: [92, 80], iconAnchor: [26, 76], html: `<svg width="92" height="80" viewBox="0 0 92 80">${pin(26, 76, rain, elev)}</svg>`}); }
+function iconPin(rain, elev){ return LF.divIcon({className: "sq-icon", iconSize: [92, 80], iconAnchor: [26, 76], html: `<svg width="92" height="80" viewBox="0 0 92 80" style="overflow:visible">${pin(26, 76, rain, elev)}</svg>`}); }
 /* heights at every stop and along each stretch (elevPoints, like the sketch map), plus the day's high point */
 let ELEV_LAYER = null;
 function drawElevLive(){
@@ -233,7 +233,8 @@ function liveWho(d){ const js = segAt(d, S.t), pre = !js && d.transfer && S.t < 
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
     return {ll: alongPoly([js.a, ...(js.via || []), js.b], f), icon: js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(), walking: false, key: js.kind === "ride" ? "ride:" + js.mode : "group"}; }
   if (pre) return {ll: journeyOf(d)[0].a, icon: iconSquirrels(), walking: false, key: "group"};
-  return {ll: llAt(d, S.km), icon: iconPin(rainingNow(d), S.elev ? elevTag(d, S.km) : ""), walking: true, key: "walk"}; }
+  const rain = rainingNow(d);   // the key changes with the rain, so a drag into or out of a shower swaps the picture
+  return {ll: llAt(d, S.km), icon: iconPin(rain, S.elev ? elevTag(d, S.km) : ""), walking: true, key: `walk:${rain ? rain.lvl + (rain.snow ? "s" : "") : 0}`}; }
 /* change a marker's picture mid-drag: Leaflet's setIcon would rebuild the element and end the drag, so swap its insides */
 function swapIcon(m, icon){ const el = m.getElement(), o = icon.options; if (!el) return;
   el.innerHTML = o.html; el.style.width = o.iconSize[0] + "px"; el.style.height = o.iconSize[1] + "px";

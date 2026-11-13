@@ -1,7 +1,7 @@
 """Save the weather forecast for the trip into the planner (run on request; no live weather calls from the page).
 
-For each walking day it samples the route (every ~0.75 km), the day's planned rides and the inns, buckets those
-points into ~3 km cells, and fetches an hourly forecast for each cell for that date (JST):
+For each walking day it samples the route (every 0.4 km), along the day's planned rides and the inns, buckets those
+points into ~1.5 km cells, and fetches an hourly forecast for each cell for that date (JST):
 
   1. Open-Meteo (api.open-meteo.com): hourly for all days, one request per day. Free, no key, CC BY 4.0.
   2. If that fails (it rate-limits per IP): MET Norway Locationforecast (api.met.no), free, CC BY 4.0.
@@ -24,7 +24,7 @@ PLANNER = ROOT / "src/planner.html"
 OUT = ROOT / "data/weather.json"
 JST = dt.timezone(dt.timedelta(hours=9))
 UA = {"User-Agent": "nakasendo-route-planner-weather/1.0"}
-CELL = 0.03                                   # degrees (~3 km)
+CELL = 0.015                                  # degrees (~1.5 km): every spot on the map is within ~1 km of a saved point
 
 def get(url, tries=3):
     for i in range(tries):
@@ -43,11 +43,11 @@ def points_from_planner():
         pg.goto(PLANNER.as_uri())
         out = pg.evaluate("""() => { const out = {};
           Object.values(DAYS).forEach(d => { const iso = dayISO(d), pts = out[iso] = out[iso] || [];
-            for (let km = 0; km <= total(d) + 1e-6; km += 0.75) pts.push(llAt(d, km));
+            for (let km = 0; km <= total(d) + 1e-6; km += 0.4) pts.push(llAt(d, km));
             pts.push(llAt(d, total(d)));
-            journeyOf(d).forEach(g => [g.a, ...(g.via || []), g.b].forEach(q => pts.push(q)));
+            journeyOf(d).forEach(g => { const line = [g.a, ...(g.via || []), g.b]; for (let f = 0; f <= 1.0001; f += 0.02) pts.push(alongPoly(line, f)); });   // along the rides too
             if (d.skip) [d.skip.fromLL, ...(d.skip.via || []), d.skip.toLL].forEach(q => pts.push(q));
-            for (let h = 0; h < 24; h++) pts.push(whereAt(d, h*60 + 30)); });
+            for (let t = 0; t < 24*60; t += 10) pts.push(whereAt(d, t)); });
           return out; }""")
         b.close(); return out
 
