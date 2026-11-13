@@ -216,21 +216,16 @@ function iconSquirrels(){
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
 function iconPin(rain, elev){ return LF.divIcon({className: "sq-icon", iconSize: [92, 80], iconAnchor: [26, 76], html: `<svg width="92" height="80" viewBox="0 0 92 80">${pin(26, 76, rain, elev)}</svg>`}); }
-/* heights at fixed km along today's walk, spaced to suit the zoom (like the sketch map), plus the day's high point */
+/* heights at every stop and along each stretch (elevPoints, like the sketch map), plus the day's high point */
 let ELEV_LAYER = null;
 function drawElevLive(){
   if (!LMAP || !LMAP._loaded) return;
   if (!ELEV_LAYER) ELEV_LAYER = LF.layerGroup().addTo(LMAP);
   ELEV_LAYER.clearLayers();
-  const d = D(), h = ELEV.days[d.id]; if (!LIVE || !S.elev || !h) return;
-  const px = lineLL(d).map(q => LMAP.latLngToContainerPoint(q)), tot = total(d);
-  const pxPerKm = px.slice(1).reduce((a, q, i) => a + q.distanceTo(px[i]), 0) / Math.max(tot, 0.1);
-  const step = ELEV_STEPS.find(s => s * pxPerKm >= 80) ?? 50, hi = h.indexOf(Math.max(...h)) * ELEV.step;
-  const at = [{km: hi, top: true}];
-  for (let k = step; k < tot - step * 0.3; k += step) if (Math.abs(k - hi) > step * 0.35) at.push({km: k});
-  at.forEach(({km, top}) => {
+  const d = D(); if (!LIVE || !S.elev || !ELEV.days[d.id]) return;
+  elevPoints(d, km => { const q = LMAP.latLngToContainerPoint(llAt(d, km)); return [q.x, q.y]; }, 85).forEach(({km, top, stop}) => {
     const txt = `${top ? "⛰️ " : ""}${Math.round(elevAt(d, km))} m`;
-    LF.marker(llAt(d, km), {interactive: false, keyboard: false, zIndexOffset: top ? 200 : 100, icon: LF.divIcon({className: "elv-mark" + (top ? " top" : ""), iconSize: [0, 0], html: `<i></i><span>${esc(txt)}</span>`})}).addTo(ELEV_LAYER);
+    LF.marker(llAt(d, km), {interactive: false, keyboard: false, zIndexOffset: top ? 200 : stop ? 150 : 100, icon: LF.divIcon({className: "elv-mark" + (top ? " top" : stop ? " stop" : ""), iconSize: [0, 0], html: `<i></i><span>${esc(txt)}</span>`})}).addTo(ELEV_LAYER);
   });
 }
 function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
