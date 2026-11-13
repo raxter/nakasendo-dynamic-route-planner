@@ -374,6 +374,6 @@ function setLive(on){
   $("lmap").hidden = !LIVE; $("map").style.visibility = $("sky").style.visibility = LIVE ? "hidden" : "";
   $("zlive").innerHTML = LIVE ? "✏️<small>Sketch</small>" : "🗺️<small>Live</small>"; $("zlive").classList.toggle("on", LIVE);
   $("zlive").title = LIVE ? "Back to the sketch map" : "Live map with your location"; $("zlive").setAttribute("aria-label", $("zlive").title);
-  $("zgps").hidden = !LIVE;
+  $("zgps").hidden = !LIVE; zoomMore();
   if (LIVE){ liveInit(); setTimeout(() => { LMAP.invalidateSize(); drawLive(); }, 30); geoStart(); }
 }

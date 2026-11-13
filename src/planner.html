@@ -87,7 +87,13 @@
   .badge{font-size:11.5px;padding:1px 8px;border-radius:999px;background:rgba(253,238,242,.95);border:1.5px solid var(--sakura)}
   .badge.warn{background:rgba(255,243,220,.95);border-color:var(--gold)}
   .badge.bad{background:rgba(253,230,223,.95);border-color:var(--shu)}
-  .zoom{position:absolute;right:8px;top:8px;z-index:6;display:flex;flex-direction:column;flex-wrap:wrap-reverse;align-content:flex-start;align-items:flex-end;gap:5px;max-height:calc(100% - 16px)}
+  .zoom{position:absolute;right:4px;top:4px;z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-height:calc(100% - 8px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;padding:4px}
+  .zoom::-webkit-scrollbar{display:none}
+  .zoom > *{flex-shrink:0}
+  .zoom.more-down{-webkit-mask-image:linear-gradient(#000 calc(100% - 26px),transparent);mask-image:linear-gradient(#000 calc(100% - 26px),transparent)}
+  .zoom.more-up{-webkit-mask-image:linear-gradient(transparent,#000 26px);mask-image:linear-gradient(transparent,#000 26px)}
+  .zoom.more-up.more-down{-webkit-mask-image:linear-gradient(transparent,#000 26px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(transparent,#000 26px,#000 calc(100% - 26px),transparent)}
+  .zmore{position:absolute;right:18px;z-index:7;width:20px;height:12px;border-radius:6px;background:rgba(255,253,248,.95);border:1.5px solid var(--line);font-size:8px;line-height:9px;text-align:center;color:var(--quiet);pointer-events:none}
   .zoom button{appearance:none;width:36px;height:36px;border-radius:12px;border:2px solid var(--line);background:rgba(255,253,248,.95);font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink)}
   .sw.zgo,.sw.zback,.sw.zcommit{border-top:0;height:8px;border-radius:4px}.sw.zgo{background:rgba(90,154,91,.45)}.sw.zback{background:rgba(233,195,44,.75)}.sw.zcommit{background:rgba(228,87,46,.7)}.sw.sky{border-top:0;height:8px;border-radius:4px;background:linear-gradient(90deg,#fff1c4,#ffd98f,#ff9f6e,#c48bc6,#2c3566)}.sw.znobus{border-top:0;height:8px;border-radius:4px;background:rgba(142,27,58,.7)}
   .legend{position:absolute;left:8px;bottom:8px;pointer-events:none;background:rgba(255,253,248,.94);border:2px solid var(--line);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--quiet);display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 16px)}
@@ -168,7 +174,8 @@
   <div class="mapwrap" id="mapwrap">
     <svg id="sky" aria-hidden="true"></svg>
     <svg id="map" role="img" aria-label="Zoomable sketch map of the whole Nakasendo trip"></svg>
-    <div class="zoom">
+    <div class="zmore" id="zmoreUp" hidden>▲</div><div class="zmore" id="zmoreDn" hidden>▼</div>
+    <div class="zoom" id="zoomCol">
       <button type="button" id="zin" aria-label="Zoom in">＋</button>
       <button type="button" id="zout" aria-label="Zoom out">－</button>
       <button type="button" id="zday" aria-label="Fit today's walk" title="Fit today">📍</button>
@@ -1238,6 +1245,13 @@ function hereAt(X){
   sel.addEventListener("click", e => { e.stopPropagation(); e.preventDefault && 0; });
   sel.addEventListener("change", () => { const v = sel.value; if (!v) return; hereAt(v === "now" ? nowMin() : +v); sel.value = ""; sel.blur(); });
 })();
+/* the map buttons scroll when the map is too short for them all: fade + ▲/▼ shows there's more */
+function zoomMore(){ const z = $("zoomCol"), up = z.scrollTop > 6, dn = z.scrollTop + z.clientHeight < z.scrollHeight - 6;
+  z.classList.toggle("more-up", up); z.classList.toggle("more-down", dn);
+  $("zmoreUp").hidden = !up; $("zmoreDn").hidden = !dn;
+  $("zmoreUp").style.top = (z.offsetTop - 2) + "px"; $("zmoreDn").style.top = (z.offsetTop + z.clientHeight - 10) + "px"; }
+$("zoomCol").addEventListener("scroll", zoomMore, {passive: true});
+new ResizeObserver(zoomMore).observe($("zoomCol"));
 /* ---------- start ---------- */
 let rz, started = false;
 new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => {
@@ -1245,7 +1259,7 @@ new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => {
   const cx = unscr([W/2, H/2]), rel = V.k / K_MIN;
   sizeMap(); V.k = rel * K_MIN; V.tx = W/2 - cx[0]*V.k; V.ty = H/2 - cx[1]*V.k; clampView(); render();
 }, 60); }).observe(wrap);
-txtButtons(); menuSync(); setFromTime(hm("10:30")); drawChips(); sync(); sizeMap(); fitDay(); render();
+txtButtons(); menuSync(); setFromTime(hm("10:30")); drawChips(); sync(); sizeMap(); fitDay(); render(); zoomMore();
 const hint = $("hint"); hint.style.left = WALKER[0] + "px"; hint.style.top = (WALKER[1] - 52) + "px";
 setTimeout(() => hint.style.opacity = 0, 4500);
 started = true;
