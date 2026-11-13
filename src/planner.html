@@ -797,7 +797,7 @@ function elevMarks(d){   // sketch map: heights at every stop and along each str
     const off = stop ? 13 : 9, txt = `${top ? "⛰️ " : ""}${Math.round(elevAt(d, km))} m`, tx = x + nx * off, ty = y + ny * off;
     const anchor = nx > 0.35 ? "start" : nx < -0.35 ? "end" : "middle", w = txt.length * fs * 0.56;
     if (top) g += `<path d="M${x-4.5} ${y+3} L${x} ${y-5} L${x+4.5} ${y+3} Z" fill="#7a5c3e" stroke="#fffdf8" stroke-width="1.2"/>`;
-    else if (!stop) g += `<circle cx="${x}" cy="${y}" r="2.6" fill="#fffdf8" stroke="#7a5c3e" stroke-width="1.4"/>`;
+    else if (!stop) g += `<path d="M${x + nx*2} ${y + ny*2} L${x + nx*6} ${y + ny*6}" stroke="#7a5c3e" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>`;   // a little tick, not a dot (dots read as stations)
     g += `<text x="${tx}" y="${ty + fs * 0.35}" text-anchor="${anchor}" font-size="${fs}" font-weight="${top || stop ? 800 : 700}" fill="${stop || top ? "#5b4330" : "#7a5c3e"}" paint-order="stroke" stroke="#fbf6ec" stroke-width="3">${esc(txt)}</text>`;
     OBST.push({x: anchor === "start" ? tx : anchor === "end" ? tx - w : tx - w/2, y: ty - fs * 0.6, w, h: fs * 1.2});
   });
