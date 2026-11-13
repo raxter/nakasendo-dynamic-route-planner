@@ -448,6 +448,24 @@ function alongPoly(pts, f){ const L = [0]; for (let i = 1; i < pts.length; i++) 
   const want = Math.min(Math.max(f, 0), 1) * L.at(-1);
   for (let i = 1; i < pts.length; i++) if (L[i] >= want){ const g = (want - L[i-1]) / ((L[i] - L[i-1]) || 1); return [pts[i-1][0] + (pts[i][0]-pts[i-1][0])*g, pts[i-1][1] + (pts[i][1]-pts[i-1][1])*g]; }
   return pts.at(-1); }
+/* dragging along the planned tour transport: each moving leg as screen samples {p, f}, where f is how far along the leg
+   the squirrels would be drawn at p (the sketch bows plain rides and smooths rides with stops; the live map uses straight lines) */
+function legSamples(js, xy, straight){
+  const a = xy(js.a), b = xy(js.b), byLen = poly => { const L = [0]; for (let i = 1; i < poly.length; i++) L.push(L[i-1] + Math.hypot(poly[i][0]-poly[i-1][0], poly[i][1]-poly[i-1][1]));
+    return poly.map((q, i) => ({p: q, f: L[i] / (L.at(-1) || 1)})); };
+  if (js.kind === "ride" && !straight) return js.via ? byLen(smoothThrough([a, ...js.via.map(xy), b])) : Array.from({length: 25}, (_, i) => ({p: bowPt(a, b, i/24), f: i/24}));
+  return byLen([a, ...(js.kind === "ride" ? (js.via || []).map(xy) : []), b]);
+}
+/* the nearest point on today's planned transport to screen point p → {dist (px), t, f, js} or null */
+function nearestLeg(d, p, xy, straight){
+  let best = null;
+  journeyOf(d).forEach(js => { if (js.kind === "wait" || js.t1 > 1e8 || near(js.a, js.b)) return;
+    const sm = legSamples(js, xy, straight);
+    for (let i = 0; i < sm.length - 1; i++){ const a = sm[i].p, b = sm[i+1].p, vx = b[0]-a[0], vy = b[1]-a[1], l2 = vx*vx + vy*vy || 1;
+      const g = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy) / l2)), dist = Math.hypot(p[0]-(a[0]+g*vx), p[1]-(a[1]+g*vy));
+      if (!best || dist < best.dist){ const f = sm[i].f + g * (sm[i+1].f - sm[i].f); best = {dist, f, js, t: js.t0 + f * (js.t1 - js.t0 - 0.01)}; } } });
+  return best;
+}
 /* the stops a duck-out ride passes, start to finish */
 const rideNodes = o => [o.p.hop.at || o.p.ll, ...(o.p.hop.via || []), o.p.hop.toLL];
 /* are the keep-going and turn-back rides the same bus/train for the last part of the way? (e.g. Day 2: back to Nakatsugawa,
@@ -1153,6 +1171,9 @@ function nearestOn(d, p){
 const SNAP_PX = 45;
 function dragTo(p){
   const cur = D(), here = nearestOn(cur, p);
+  // today's planned transport (train, van, taxi, the short walks to the inn) can be dragged along too: hop on when it's nearer than the trail
+  const leg = nearestLeg(cur, p, scr);
+  if (leg && leg.dist + 4 < here.dist){ setFromTime(leg.t); return; }
   let pick = {key:null, ...here};
   // other days (both Day 4 courses) can take over when the finger is clearly nearer to them
   ["d2","d3","d4B","d4A","d5","d6","d7"].forEach(k => {

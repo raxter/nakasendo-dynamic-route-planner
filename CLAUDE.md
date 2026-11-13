@@ -30,7 +30,7 @@ You are picking up a project built in an earlier Claude session. This file is th
 | `tools/build_paths.py` | Builds the real walking paths from OpenStreetMap (see §4 "Paths") into `data/trail_paths.json` and the `TRAIL-PATHS` block in `src/planner.html`. Raw OSM downloads are cached in `.cache/` (git-ignored); `--refresh` re-downloads. |
 | `index.html` | **Built output, served by GitHub Pages. Never edit it by hand.** |
 | `tools/tests/sweep.py` | Regression test: every day × every 7 min. Fails on any JS error or on card-height judder. |
-| `tools/tests/test_live.py` | Live-map test with mocked GPS (near Tsumago) and clock (16 Nov 11:20 JST). It needs `npm i leaflet@1.9.4`. |
+| `tools/tests/test_live.py` | Live-map test with mocked GPS (near Tsumago) and clock (16 Nov 11:20 JST): "set to here", dragging stays on the trail, and dragging onto the evening train hops on. It needs `npm i leaflet@1.9.4`. |
 | `docs/*.pdf` | Printable trail and duck-out guides: one in English, one with English and Japanese side by side. They're static and were made in the earlier session; the generator isn't included. |
 | `data/trail_data.json` | Per-day stops, ETAs at 30 min/km, zones and journeys, exported from the planner for the PDFs. |
 | `kml/*.kml` + `tools/build_kml.py` | Google My Maps imports for inns and sub-stops. **These use the old pace assumptions.** |
@@ -105,6 +105,7 @@ Precedence:
 - Dragging the squirrels changes the time.
   - Within `END_SNAP_PX` (18 px) of a day's start or finish, a drag lands exactly on it (`snapEnds`).
   - Where days meet (e.g. Magome), the day you're on wins. Another day only takes over when it's clearly nearer (8 px), on both maps.
+  - **Dragging along the planned transport** (owner's request): today's `journeyOf` legs (morning taxi/van/train, evening trains, the short walks to the inn) can be dragged along too. `nearestLeg(d, p, xy, straight)` finds the nearest point on them (via `legSamples`, which matches how each map draws the vehicle: bowed or smoothed on the sketch, straight on the live map). When it's 4 px nearer than the trail, the clock jumps to that point of the ride (`setFromTime`), so the squirrels hop on. On the live map the marker swaps between pin, vehicle and group mid-drag with `swapIcon` (Leaflet's `setIcon` would end the drag), `liveWho(d)` picks which, and the kids fade out while riding. `test_live.py` checks it.
 - Changing the pace keeps the position and changes the time.
 - Moving the ▲ start keeps the position.
 

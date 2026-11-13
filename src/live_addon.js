@@ -228,6 +228,16 @@ function drawElevLive(){
     LF.marker(llAt(d, km), {interactive: false, keyboard: false, zIndexOffset: top ? 200 : stop ? 150 : 100, icon: LF.divIcon({className: "elv-mark" + (top ? " top" : stop ? " stop" : ""), iconSize: [0, 0], html: `<i></i><span>${esc(txt)}</span>`})}).addTo(ELEV_LAYER);
   });
 }
+/* who's on the map and where: mum walking (pin + kids), the vehicle on a ride, or the three together waiting / at the inn */
+function liveWho(d){ const js = segAt(d, S.t), pre = !js && d.transfer && S.t < startOf(d);
+  if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
+    return {ll: alongPoly([js.a, ...(js.via || []), js.b], f), icon: js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(), walking: false, key: js.kind === "ride" ? "ride:" + js.mode : "group"}; }
+  if (pre) return {ll: journeyOf(d)[0].a, icon: iconSquirrels(), walking: false, key: "group"};
+  return {ll: llAt(d, S.km), icon: iconPin(rainingNow(d), S.elev ? elevTag(d, S.km) : ""), walking: true, key: "walk"}; }
+/* change a marker's picture mid-drag: Leaflet's setIcon would rebuild the element and end the drag, so swap its insides */
+function swapIcon(m, icon){ const el = m.getElement(), o = icon.options; if (!el) return;
+  el.innerHTML = o.html; el.style.width = o.iconSize[0] + "px"; el.style.height = o.iconSize[1] + "px";
+  el.style.marginLeft = -o.iconAnchor[0] + "px"; el.style.marginTop = -o.iconAnchor[1] + "px"; m.options.icon = icon; }
 function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
 /* the two grown-up kids trail behind mum along today's path, a fixed number of screen pixels back (like the sketch map) */
 let KIDS = null;
@@ -331,25 +341,27 @@ function drawLive(){
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
   drawElevLive();
-  let ll = llAt(d, km), icon = iconPin(rainingNow(d), S.elev ? elevTag(d, km) : ""), drag = true, walking = true;
-  if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
-    ll = alongPoly([js.a, ...(js.via || []), js.b], f);
-    icon = js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(); drag = js.kind !== "ride"; walking = false; }
-  else if (pre){ ll = journeyOf(d)[0].a; icon = iconSquirrels(); walking = false; }
-  KIDS = walking ? [iconKid("scarf", .64), iconKid("pack", .62)].map(ic => LF.marker(llAt(d, km), {icon: ic, interactive: false, keyboard: false, zIndexOffset: 900}).addTo(LLAYER)) : null;
+  let {ll, icon, walking, key} = liveWho(d), lastKey = key;
+  KIDS = [iconKid("scarf", .64), iconKid("pack", .62)].map(ic => LF.marker(llAt(d, km), {icon: ic, interactive: false, keyboard: false, zIndexOffset: 900, opacity: walking ? 1 : 0}).addTo(LLAYER));
   placeKids();
-  const m = LF.marker(ll, {icon, draggable: drag, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);
+  const m = LF.marker(ll, {icon, draggable: true, zIndexOffset: 1000, keyboard: false}).addTo(LLAYER);
   // dragging keeps the squirrels on the trail all the way (like the sketch map): snap on every move
   // stay on today's walk unless another day is clearly nearer (where days meet, e.g. Magome, today wins),
   // and land exactly on the day's start or finish when the finger is within a few pixels of it
   const snapDrag = p => { const ll = [p.lat, p.lng], mpp = 40075016.7 * Math.cos(p.lat * Math.PI/180) / Math.pow(2, LMAP.getZoom() + 8);
     let s = {...snapToDay(D(), ll), day: S.day};
+    // today's planned transport can be dragged along too: hop on the train / van / taxi when it's nearer than the trail
+    const c0 = LMAP.latLngToContainerPoint(p), xy = q => { const c = LMAP.latLngToContainerPoint(q); return [c.x, c.y]; };
+    const leg = nearestLeg(D(), [c0.x, c0.y], xy, true);
+    if (leg && (leg.dist + 4) * mpp < s.dist){ setFromTime(leg.t); sync(); render(); return liveWho(D()).ll; }
     ORDER.forEach(k => { if (k === S.day) return; const o = snapToDay(dayObj(k), ll); if (o.dist + 8 * mpp < s.dist) s = {...o, day: k}; });
     if (s.day !== S.day){ S.day = s.day; $("courseBox").hidden = S.day !== "d4"; drawChips(); }
     const d = D(), cp = LMAP.latLngToContainerPoint(p), px = q => cp.distanceTo(LMAP.latLngToContainerPoint(q));
-    setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return llAt(D(), S.km); };
+    setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return liveWho(D()).ll; };
   m.on("dragstart", () => LDRAG = true);
-  m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng())); placeKids();
+  m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng()));
+    const w = liveWho(D()); if (w.key !== lastKey){ lastKey = w.key; swapIcon(m, w.icon); KIDS.forEach(k => k.setOpacity(w.walking ? 1 : 0)); }
+    placeKids();
     const t = m.getElement()?.querySelector(".elvT"); if (t) t.textContent = S.elev ? elevTag(D(), S.km) : ""; });
   m.on("dragend", e => { snapDrag(e.target.getLatLng()); LDRAG = false; render(); });
   // you: the blue dot

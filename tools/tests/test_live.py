@@ -30,5 +30,14 @@ async def main():
         await pg.mouse.move(x0, y0); await pg.mouse.down(); await pg.mouse.move(x0 - 120, y0 + 60, steps=8)
         off = await pg.evaluate("() => { let m; LLAYER.eachLayer(l => { if (l.dragging && l.dragging.enabled()) m = l; }); const p = m.getLatLng(); return snapAnyDay([p.lat, p.lng]).dist; }")
         await pg.mouse.up(); print("mid-drag distance from trail (m):", round(off, 1))
-        await b.close(); sys.exit(1 if errs or r[0] != "d4" or off > 30 else 0)
+        # drag mum off the end of the walk onto the planned evening train: she must hop on (vehicle shown, clock on the ride)
+        await pg.evaluate("() => { setFromPos(total(D())); sync(); render(); const j = journeyOf(D()).find(g => g.kind === 'ride'); LMAP.fitBounds([j.a, j.b], {padding:[90,90]}); }"); await pg.wait_for_timeout(400)
+        sx, sy, tx, ty = await pg.evaluate("""() => { const r = document.getElementById('lmap').getBoundingClientRect(), j = journeyOf(D()).find(g => g.kind === 'ride');
+            const a = LMAP.latLngToContainerPoint(llAt(D(), total(D()))), m = LMAP.latLngToContainerPoint(alongPoly([j.a, ...(j.via || []), j.b], .5)); return [a.x + r.left, a.y + r.top, m.x + r.left, m.y + r.top]; }""")
+        bb = await pg.locator(".leaflet-marker-icon.leaflet-marker-draggable").first.bounding_box()
+        gx, gy = bb["x"] + 26, bb["y"] + 50
+        await pg.mouse.move(gx, gy); await pg.mouse.down(); await pg.mouse.move(gx + tx - sx, gy + ty - sy, steps=12)
+        ride = await pg.evaluate("() => { const js = segAt(D(), S.t); return js ? js.kind : 'walk'; }")
+        await pg.mouse.up(); print("dragged onto the evening train:", ride, errs)
+        await b.close(); sys.exit(1 if errs or r[0] != "d4" or off > 30 or ride != "ride" else 0)
 asyncio.run(main())
