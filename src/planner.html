@@ -748,16 +748,16 @@ function rideIcon(x, y, mode){   // the vehicle, with the three squirrels peekin
   return `<g transform="translate(${x} ${y - 4}) scale(1.4)"><ellipse cx="0" cy="-2" rx="22" ry="3" fill="#000" opacity=".12"/>${body}</g>`;
 }
 /* a pink wagasa (paper umbrella) mum holds up when it's raining where she is */
-/* the pink wagasa; rain (or snow) falls around it, more and longer drops the harder it rains (rain = {lvl 1–4, snow}) */
+/* the pink wagasa; rain (or snow) falls around it, more and longer drops the harder it rains (rain = {lvl 1–5, snow}) */
 const RAIN_SPOTS = [[12,-4],[-25,17],[25,19],[-6,-9],[28,5],[-28,3],[19,-11],[-16,-10],[24,27],[-25,27],[4,-13],[-11,-14],[30,-5],[-30,-6],[32,16],[-31,15]];   // kept close round the umbrella
 function umbrella(x, cy, rain){
   const ux = x + 7, top = cy - 40, L = ux - 22, R = ux + 22, rim = cy - 21;
-  const lvl = rain?.lvl || 1, n = [0, 3, 6, 10, 16][lvl], len = [0, 4, 5, 6.5, 7.5][lvl], wdt = [0, 1.5, 1.6, 1.8, 2][lvl];
+  const lvl = rain?.lvl || 1, n = [0, 3, 6, 9, 12, 16][lvl], len = [0, 4, 4.8, 5.6, 6.6, 7.6][lvl], wdt = [0, 1.4, 1.5, 1.7, 1.85, 2][lvl];
   const spots = RAIN_SPOTS.slice(0, n).map(([dx, dy]) => [ux + dx, top + 4 + dy]);
   const fall = rain?.snow
     ? spots.map(([a, b]) => `<circle cx="${a}" cy="${b + 3}" r="${1.4 + lvl*0.25}" fill="#fff" stroke="#8fb3d9" stroke-width=".8"/>`).join("")
-    : `<path d="${spots.map(([a, b]) => `M${a} ${b} l${(len*0.32).toFixed(1)} ${len}`).join(" ")}" stroke="#4a8fd0" stroke-width="${wdt}" stroke-linecap="round" opacity="${0.75 + lvl*0.05}"/>`;
-  const splash = !rain?.snow && lvl >= 3 ? `<path d="M${x-13} ${cy+32} q2.5 -2.5 5 0 M${x+8} ${cy+33} q2.5 -2.5 5 0${lvl >= 4 ? ` M${x-3} ${cy+35} q2.5 -2.5 5 0` : ""}" stroke="#4a8fd0" stroke-width="1.2" fill="none" stroke-linecap="round"/>` : "";
+    : `<path d="${spots.map(([a, b]) => `M${a} ${b} l${(len*0.32).toFixed(1)} ${len}`).join(" ")}" stroke="#4a8fd0" stroke-width="${wdt}" stroke-linecap="round" opacity="${0.72 + lvl*0.05}"/>`;
+  const splash = !rain?.snow && lvl >= 4 ? `<path d="M${x-13} ${cy+32} q2.5 -2.5 5 0 M${x+8} ${cy+33} q2.5 -2.5 5 0${lvl >= 5 ? ` M${x-3} ${cy+35} q2.5 -2.5 5 0` : ""}" stroke="#4a8fd0" stroke-width="1.2" fill="none" stroke-linecap="round"/>` : "";
   return `<g class="rain r${lvl}">
     ${fall}${splash}
     <path d="M${ux} ${rim-1} L${ux-3} ${cy+3}" stroke="#7a4a2a" stroke-width="2.2" stroke-linecap="round"/>
@@ -770,13 +770,13 @@ function umbrella(x, cy, rain){
 function hereLL(d){ const js = segAt(d, S.t), pre = !js && d.transfer && S.t < startOf(d); return js || pre ? whereAt(d, S.t) : llAt(d, S.km); }
 /* mm of rain in an hour, for the strip: "0.4mm", "12mm", or nothing when it's dry */
 const mmTxt = mm => mm == null || mm < 0.1 ? "" : `${mm < 10 ? mm.toFixed(1) : Math.round(mm)}`;
-/* how hard it's raining (or snowing) where the squirrels are, at the time shown → null (dry) or {lvl 1–4, snow}
-   lvl: 1 light (< 1 mm/h or drizzle), 2 moderate (1–2.5), 3 heavy (2.5–5), 4 very heavy (5+ or thunder) */
+/* how hard it's raining (or snowing) where the squirrels are, at the time shown → null (dry) or {lvl 1–5, snow}
+   lvl = mm/h rounded up: 1 up to 1 mm/h (or drizzle), 2 up to 2, 3 up to 3, 4 up to 4, 5 for 4+ mm/h or thunder */
 function rainingNow(d){ if (!S.wx) return null;
   const w = wxAt(d, hereLL(d), Math.floor(S.t / 60)); if (!w) return null;
   const mm = w.mm || 0, wet = w.c >= 51 || mm >= 0.2; if (!wet) return null;
   const snow = (w.c >= 71 && w.c <= 77) || w.c === 85 || w.c === 86;
-  const lvl = w.c >= 95 || mm >= 5 ? 4 : mm >= 2.5 ? 3 : mm >= 1 ? 2 : 1;
+  const lvl = w.c >= 95 ? 5 : Math.min(5, Math.max(1, Math.ceil(mm - 1e-9)));
   return {lvl, snow, mm}; }
 /* ---------- heights: metres above sea level along each walk (saved by tools/build_elev.py from GSI's 10 m elevation tiles) ---------- */
 function elevAt(d, km){ const h = ELEV.days[d.id]; if (!h || !h.length) return null;
