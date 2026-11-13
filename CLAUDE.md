@@ -169,6 +169,7 @@ These colour the wide band under the route.
   - Day 4 has a course toggle.
   - The **"📍 I'm here…"** dropdown (`hereAt`): Now, then 15-min times. It keeps the position, sets the clock, and back-solves the walk start.
   - The **▲** marker is draggable.
+  - **Map buttons must always be tappable.** The legend has `pointer-events:none` and sits under the button column (`.zoom` z-index 6, legend 5). When the map is short (small or landscape phones), `.zoom` has a `max-height` and wraps into a second column to the left (`flex-wrap:wrap-reverse`) instead of running off the map under the cards.
   - Map buttons: zoom, fit today, whole trip, text visibility (👁️ shown / hidden / faded), text size (50/75/100%) and **☰**. The ☰ menu has the path style (walking path / straight lines) and the daylight band on/off, plus, on the built page only (injected by `build_live.py`), the live-map background.
 
 ### Live mode (src/live_addon.js)

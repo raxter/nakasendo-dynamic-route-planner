@@ -21,7 +21,7 @@ rep('''      <button type="button" id="ztrip" aria-label="Show whole trip" title
       <button type="button" id="zlive" aria-label="Live map with your location" title="Live map with your location">🗺️<small>Live</small></button>
       <button type="button" id="zgps" aria-label="Show my location" title="Show my location" hidden>🎯</button>''')
 rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate;background:#e9e4da}
-  .zoom,.legend{z-index:5}
+  .legend{z-index:5}.zoom{z-index:6}
   /* the live/sketch switch says what it does, so the way back from the live map is obvious */
   .zoom #zlive{width:auto;min-width:36px;align-self:flex-end;padding:0 7px;display:flex;align-items:center;gap:3px;white-space:nowrap}
   .zoom #zlive small{font-size:11px;font-weight:800}
