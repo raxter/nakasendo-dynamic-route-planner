@@ -147,7 +147,7 @@ function liveInit(){
   // no Leaflet zoom control: the map's own ＋ / － buttons zoom the live map too, leaving the top left for the weather strip
   LF.control.scale({imperial: false, position: "bottomleft"}).addTo(LMAP);
   LLAYER = LF.layerGroup().addTo(LMAP);
-  LMAP.on("zoomend", placeKids);   // the kids keep the same on-screen spacing at every zoom
+  LMAP.on("zoomend", () => { placeKids(); drawElevLive(); });   // the kids keep the same on-screen spacing at every zoom
   LMAP.attributionControl.addAttribution('trail <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>');
   return true;
 }
@@ -215,7 +215,24 @@ function iconSquirrels(){
   return LF.divIcon({className: "sq-icon", iconSize: [96, 66], iconAnchor: [74, 62],
     html: `<svg width="96" height="66" viewBox="0 0 96 66">${squirrel(22, 63, .62, "pack")}${squirrel(44, 63, .64, "scarf")}${pin(74, 62)}</svg>`});
 }
-function iconPin(rain){ return LF.divIcon({className: "sq-icon", iconSize: [64, 80], iconAnchor: [26, 76], html: `<svg width="64" height="80" viewBox="0 0 64 80">${pin(26, 76, rain)}</svg>`}); }
+function iconPin(rain, elev){ return LF.divIcon({className: "sq-icon", iconSize: [92, 80], iconAnchor: [26, 76], html: `<svg width="92" height="80" viewBox="0 0 92 80">${pin(26, 76, rain, elev)}</svg>`}); }
+/* heights at fixed km along today's walk, spaced to suit the zoom (like the sketch map), plus the day's high point */
+let ELEV_LAYER = null;
+function drawElevLive(){
+  if (!LMAP || !LMAP._loaded) return;
+  if (!ELEV_LAYER) ELEV_LAYER = LF.layerGroup().addTo(LMAP);
+  ELEV_LAYER.clearLayers();
+  const d = D(), h = ELEV.days[d.id]; if (!LIVE || !S.elev || !h) return;
+  const px = lineLL(d).map(q => LMAP.latLngToContainerPoint(q)), tot = total(d);
+  const pxPerKm = px.slice(1).reduce((a, q, i) => a + q.distanceTo(px[i]), 0) / Math.max(tot, 0.1);
+  const step = ELEV_STEPS.find(s => s * pxPerKm >= 80) ?? 50, hi = h.indexOf(Math.max(...h)) * ELEV.step;
+  const at = [{km: hi, top: true}];
+  for (let k = step; k < tot - step * 0.3; k += step) if (Math.abs(k - hi) > step * 0.35) at.push({km: k});
+  at.forEach(({km, top}) => {
+    const txt = `${top ? "⛰️ " : ""}${Math.round(elevAt(d, km))} m`;
+    LF.marker(llAt(d, km), {interactive: false, keyboard: false, zIndexOffset: top ? 200 : 100, icon: LF.divIcon({className: "elv-mark" + (top ? " top" : ""), iconSize: [0, 0], html: `<i></i><span>${esc(txt)}</span>`})}).addTo(ELEV_LAYER);
+  });
+}
 function iconKid(acc, sc){ return LF.divIcon({className: "sq-icon", iconSize: [40, 40], iconAnchor: [24, 34], html: `<svg width="40" height="40" viewBox="0 0 40 40">${squirrel(20, 37, sc, acc)}</svg>`}); }
 /* the two grown-up kids trail behind mum along today's path, a fixed number of screen pixels back (like the sketch map) */
 let KIDS = null;
@@ -318,7 +335,8 @@ function drawLive(){
   }
   INNS.forEach(n => LF.marker(n.ll, {icon: LF.divIcon({className: "sq-icon", html: "🏮", iconSize: [18, 18], iconAnchor: [9, 9]})}).addTo(LLAYER).bindTooltip(`Night ${n.n} · ${esc(n.name)}`));
   // the squirrels (or their train / van)
-  let ll = llAt(d, km), icon = iconPin(rainingNow(d)), drag = true, walking = true;
+  drawElevLive();
+  let ll = llAt(d, km), icon = iconPin(rainingNow(d), S.elev ? elevTag(d, km) : ""), drag = true, walking = true;
   if (js){ const f = js.kind === "wait" ? 0 : (S.t - js.t0) / Math.max(js.t1 - js.t0, 1);
     ll = alongPoly([js.a, ...(js.via || []), js.b], f);
     icon = js.kind === "ride" ? iconRide(js.mode) : iconSquirrels(); drag = js.kind !== "ride"; walking = false; }
@@ -336,7 +354,8 @@ function drawLive(){
     const d = D(), cp = LMAP.latLngToContainerPoint(p), px = q => cp.distanceTo(LMAP.latLngToContainerPoint(q));
     setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return llAt(D(), S.km); };
   m.on("dragstart", () => LDRAG = true);
-  m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng())); placeKids(); });
+  m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng())); placeKids();
+    const t = m.getElement()?.querySelector(".elvT"); if (t) t.textContent = S.elev ? elevTag(D(), S.km) : ""; });
   m.on("dragend", e => { snapDrag(e.target.getLatLng()); LDRAG = false; render(); });
   // you: the blue dot
   if (GEO){

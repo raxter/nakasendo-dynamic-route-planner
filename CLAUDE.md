@@ -26,6 +26,7 @@ You are picking up a project built in an earlier Claude session. This file is th
 | `src/live_addon.js` | The live-map mode: a Leaflet map, a GPS blue dot, and "set position & time to here". It's spliced into the page at build time. |
 | `tools/build_live.py` | Builds `index.html` = `src/planner.html` + `src/live_addon.js` + Leaflet from cdnjs. It uses exact-string anchors, so if an anchor moves, the build fails loudly. |
 | `tools/build_weather.py` | Saves the hourly forecast for each day's route into `data/weather.json` and the `WEATHER` block in `src/planner.html` (see §4 "Weather strip"). Run on request. |
+| `tools/build_elev.py` | Saves the height every 100 m along each day's walking path (GSI 10 m elevation tiles) into `data/elevation.json` and the `ELEV` block in `src/planner.html` (see §4 "Heights"). Re-run after `build_paths.py`. |
 | `tools/build_paths.py` | Builds the real walking paths from OpenStreetMap (see §4 "Paths") into `data/trail_paths.json` and the `TRAIL-PATHS` block in `src/planner.html`. Raw OSM downloads are cached in `.cache/` (git-ignored); `--refresh` re-downloads. |
 | `index.html` | **Built output, served by GitHub Pages. Never edit it by hand.** |
 | `tools/tests/sweep.py` | Regression test: every day × every 7 min. Fails on any JS error or on card-height judder. |
@@ -128,6 +129,14 @@ Precedence:
 - **In the app:** `wxAt(d, ll, h)` looks up the nearest saved point for that day and hour. The strip ends with an "as of" cell, the legend `#lgWx` names the source(s) and time, and the tooltips name each day's source. Days with nothing saved say "no forecast saved". There are no network calls, so it works offline on the trail.
 - **Umbrella:** while walking, mum holds up a pink wagasa (`umbrella()`, drawn by `pin(x, y, rain)`) when `rainingNow(d)` says the forecast for her spot and hour is rain or snow (WMO code ≥ 51, or ≥ 0.2 mm). Both maps use it, and it follows the weather toggle. 
 - **Live map:** Leaflet's own zoom control was removed so the strip has the top left. The page's ＋ / － buttons zoom the live map too (wired in `build_live.py`). Live toasts sit below the strip (`top:64px`).
+
+### Heights
+
+- **Data:** `tools/build_elev.py` samples each day's line (`llAt`, walking paths on) every 0.1 km of itinerary km and reads GSI's `dem_png` z14 tiles (bilinear; cached in `.cache/dem/`). It writes `data/elevation.json` and the `ELEV` block (between the `ELEV` markers; don't hand-edit) and prints each day's range, high point and climb against the itinerary `up`. Re-run it after `build_paths.py` or after moving a stop.
+- **`elevAt(d, km)`** interpolates; **`elevTag(d, km)`** gives "742 m ↗" (arrow if the next 300 m climbs or drops > 8 m).
+- **Markers at fixed km** along today's walk (`elevMarks` on the sketch, `drawElevLive` in its own `ELEV_LAYER` on the live map). The spacing comes from `ELEV_STEPS` (0.5/1/2/5/10/20 km), picked so they sit ≥ 70 px (sketch) / 80 px (live) apart, so zooming in adds more. The day's high point always gets a "⛰️" triangle. Sketch tick labels are added to `OBST` so stop labels dodge them.
+- **Badge on the squirrels:** `pin(x, y, rain, elev)` draws a pill at mum's lower right while walking. The live icon is 92 px wide for it, and a live drag updates the pill's `.elvT` text in place.
+- Toggled in ☰ (`#mElev`, `S.elev`, remembered in `PREFS`); the legend's `#lgElev` credits GSI.
 
 ### Escape zones
 
