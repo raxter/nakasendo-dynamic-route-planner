@@ -59,12 +59,17 @@ def cells(pts):
     return [[round(v[0], 4), round(v[1], 4)] for v in seen.values()]
 
 def open_meteo(iso, pts):
+    # Open-Meteo's hourly rain, rain chance and weather code at HH:00 cover the hour BEFORE it (HH-1 → HH); the strip's
+    # column h means h:00 → h+1:00 (like MET Norway's next_1_hours). So fetch to the next day and take the value at h+1;
+    # temperature is an instant, so use the middle of the hour (mean of h and h+1).
+    nxt = (dt.date.fromisoformat(iso) + dt.timedelta(days=1)).isoformat()
     q = {"latitude": ",".join(str(p[0]) for p in pts), "longitude": ",".join(str(p[1]) for p in pts),
-         "hourly": "weather_code,temperature_2m,precipitation,precipitation_probability", "timezone": "Asia/Tokyo", "start_date": iso, "end_date": iso}
+         "hourly": "weather_code,temperature_2m,precipitation,precipitation_probability", "timezone": "Asia/Tokyo", "start_date": iso, "end_date": nxt}
     js = json.loads(get("https://api.open-meteo.com/v1/forecast?" + urllib.parse.urlencode(q)))
     js = js if isinstance(js, list) else [js]
-    return [{"c": w["hourly"]["weather_code"], "t": [None if v is None else round(v) for v in w["hourly"]["temperature_2m"]],
-             "mm": w["hourly"]["precipitation"], "p": w["hourly"]["precipitation_probability"]} for w in js], "1h"
+    mid = lambda a, b: None if a is None or b is None else round((a + b) / 2)
+    return [{"c": w["hourly"]["weather_code"][1:25], "t": [mid(w["hourly"]["temperature_2m"][h], w["hourly"]["temperature_2m"][h + 1]) for h in range(24)],
+             "mm": w["hourly"]["precipitation"][1:25], "p": w["hourly"]["precipitation_probability"][1:25]} for w in js], "1h"
 
 SYM = {"clearsky": 0, "fair": 1, "partlycloudy": 2, "cloudy": 3, "fog": 45, "lightrain": 61, "rain": 63, "heavyrain": 65,
        "lightrainshowers": 80, "rainshowers": 81, "heavyrainshowers": 82, "lightsleet": 66, "sleet": 67, "heavysleet": 67,
