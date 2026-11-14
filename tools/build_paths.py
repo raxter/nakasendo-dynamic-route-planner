@@ -60,7 +60,7 @@ def days_from_planner():
         b = p.chromium.launch(); pg = b.new_page()
         pg.route("https://**/*", lambda r: r.abort())
         pg.goto(PLANNER.as_uri())
-        days = pg.evaluate("() => Object.fromEntries(Object.entries(DAYS).map(([k,d]) => [k, d.pts.map(p => ({km:p.km, ll:p.ll, name:p.name}))]))")
+        days = pg.evaluate("() => Object.fromEntries(Object.entries(DAYS).map(([k,d]) => [k, d.pts.map(p => ({km:p.itinKm ?? p.km, ll:p.ll, name:p.name}))]))")
         b.close(); return days
 
 def metres(a, b):

@@ -27,7 +27,7 @@ rep("</style>", '''  #lmap{position:absolute;inset:0;z-index:1;isolation:isolate
   .zoom #zlive small{font-size:11px;font-weight:800}
   .zoom #zlive.on{background:#fff4d6;border-color:#e5a83a}
   .legend.live{bottom:22px}
-  .sq-icon{background:none;border:none;font-size:16px;line-height:18px;text-align:center}
+  .sq-icon{background:none;border:none;font-size:16px;line-height:18px;text-align:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
   .elv-mark i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:#fffdf8;border:1.6px solid #7a5c3e;box-sizing:border-box}
   .elv-mark.top i{left:-6px;top:-7px;width:0;height:0;border:6px solid transparent;border-bottom:10px solid #7a5c3e;border-top:0;border-radius:0;background:none}
   .elv-mark span{position:absolute;left:6px;top:-14px;white-space:nowrap;font-family:inherit;font-size:9px;font-weight:800;line-height:1;color:#5b4330;background:rgba(255,253,248,.8);border:1px solid #d8c6b0;border-radius:6px;padding:1px 3px}

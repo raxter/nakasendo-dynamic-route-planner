@@ -206,7 +206,7 @@ function geoStart(){
   if (GEOWATCH != null || !navigator.geolocation) { if (!navigator.geolocation) liveToast("This browser can't share your location."); return; }
   GEOWATCH = navigator.geolocation.watchPosition(p => {
     GEO = {ll: [p.coords.latitude, p.coords.longitude], acc: p.coords.accuracy, at: Date.now()};
-    if (LIVE) drawLive();
+    if (LIVE && !LDRAG) drawLive();   // not mid-drag: redrawing would drop the squirrels from under the finger (the drag's end redraws)
   }, e => { liveToast(e.code === 1 ? "Location is blocked. Allow location for this page in your browser settings to see the blue dot." : "Couldn't get your location yet. Trying again…"); },
   {enableHighAccuracy: true, maximumAge: 15000, timeout: 30000});
 }
@@ -359,6 +359,7 @@ function drawLive(){
     if (s.day !== S.day){ S.day = s.day; $("courseBox").hidden = S.day !== "d4"; drawChips(); }
     const d = D(), cp = LMAP.latLngToContainerPoint(p), px = q => cp.distanceTo(LMAP.latLngToContainerPoint(q));
     setFromPos(snapEnds(d, s.km, px(llAt(d, 0)), px(llAt(d, total(d))))); sync(); render(); return liveWho(D()).ll; };
+  m.getElement()?.addEventListener("contextmenu", e => e.preventDefault());   // a long press must not pop a menu and cancel the drag
   m.on("dragstart", () => LDRAG = true);
   m.on("drag", e => { m.setLatLng(snapDrag(e.target.getLatLng()));
     const w = liveWho(D()); if (w.key !== lastKey){ lastKey = w.key; swapIcon(m, w.icon); KIDS.forEach(k => k.setOpacity(w.walking ? 1 : 0)); }
