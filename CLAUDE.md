@@ -34,6 +34,7 @@ You are picking up a project built in an earlier Claude session. This file is th
 | `docs/*.pdf` | Printable trail and duck-out guides: one in English, one with English and Japanese side by side. They're static and were made in the earlier session; the generator isn't included. |
 | `data/trail_data.json` | Per-day stops, ETAs at 30 min/km, zones and journeys, exported from the planner for the PDFs. |
 | `kml/*.kml` + `tools/build_kml.py` | Google My Maps imports for inns and sub-stops. **These use the old pace assumptions.** |
+| `kml/day4A_pace_targets.kml` + `tools/build_day4a_pace_kml.py` | Day 4 Course A pacing markers for Google My Maps (owner's request, 15 Nov 2026): Walk Japan's Course A schedule times at OSM-placed checkpoints, plus ≈ interpolated pace checks along the planner's 4A path. Served at `/kml/day4A_pace_targets.kml`. |
 | `.nojekyll` | Stops GitHub Pages from running Jekyll. |
 
 ## 3. First job: host it on GitHub Pages
@@ -217,6 +218,7 @@ Rules and lessons:
 
 ## 7. Known uncertainties (in the app as ≈)
 
+- **Nojiri trains:** 14:52 and 17:26 (38 min to Kiso-Fukushima) are from the Walk Japan Day 4 notes; the rest of `DEP.nojiriTrain` is still ≈.
 - **Estimated times:** the Ena trains; the Ochiai and Kaida Info Centre buses; the Nojiri, Yabuhara and Narai trains; Kiso-Fukushima northbound; and the Shinano / shinkansen connection waits.
 - **Tour pick-up times** (assumed to be the leave time) and transfer durations. If the owner gets the real times from Walk Japan, put them in `DAYS[..].transfer` / `KF_NORTH`.
 - **Stop positions:** Nenoue Pass (根の上峠), Torii Pass (鳥居峠) and Sakamoto-juku (坂本宿) were moved to their OpenStreetMap positions in Nov 2026. Nenoue Pass had been about 5 km off, on the wrong side of the Kiso river. Course A goes over it by the Yogawa-michi.

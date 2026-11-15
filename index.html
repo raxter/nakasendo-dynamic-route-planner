@@ -296,7 +296,7 @@ const DEP = {
   otsumagoBus: L("11:16 13:46 15:21 17:36"),
   tsumagoBus: L("7:39 9:44 9:50 10:40 11:21 11:44 11:50 13:00 13:24 13:50 15:26 15:40 16:10 16:14 17:41"),
   nagisoTrain: L("6:22 7:02 8:00 8:11 10:19 11:00 12:19 14:34 16:00 17:16 18:16 20:19 20:43 21:49"),
-  nojiriTrain: L("6:35 7:15 8:24 10:32 12:32 14:47 17:29 18:29 20:32 22:02"),
+  nojiriTrain: L("6:35 7:15 8:24 10:32 12:32 14:52 17:26 18:29 20:32 22:02"),   // 14:52 and 17:26 from the Walk Japan Day 4 notes (38 min to Kiso-Fukushima); the rest ≈
   kaidaInfoBus: L("8:30 10:11 11:16 12:28 13:16 14:23 15:24 16:45 17:48 18:51 20:16"),
   kaidaShishoBus: L("8:36 10:17 11:22 12:34 13:22 14:29 15:30 16:51 17:54 18:57 20:22"),
   // Kiso bus Kaida line (開田幹線, down), official Oct 2026 timetable: 木曽福島駅 → やまか旅館. Every run operates on weekdays.
@@ -342,7 +342,7 @@ const DAYS = {
         pt(2, P.tsumago, "Tsumago", "stop", 20,40, {mode:"🚌 bus", to:"Nagiso Stn", toLL:P.nagiso, ride:9, deps:DEP.tsumagoBus, freqNote:"1–2 an hour"}),
         pt(8, P.nagiso, "Nagiso Stn (last exit)", "stop", 87,120, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:50, deps:DEP.nagisoTrain, freqNote:"every 1–2 h", via:[P.nojiri]}),
         pt(14, P.nenoue, "≈ Nenoue Pass", "pass", 550,50),
-        pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:40, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
+        pt(23, P.nojiri, "Nojiri Stn", "end", 50,500, {mode:"🚃 JR train", to:"Kiso-Fukushima", toLL:P.kisoF, ride:38, deps:DEP.nojiriTrain, est:true, freqNote:"every 1–2 h (≈)"})
       ]},
   d5:{chip:"Day 5", date:"Tue 17 Nov", from:"Karasawa Falls", to:"Kaida Kogen", title:"Karasawa Falls → Kaida Plateau", walkStart:hm("7:00"), lunchKm:6, before:"the tour taxi to Karasawa Falls", transfer:{kind:"taxi", mins:25},
       // skip the walk: the same Kaida bus runs from Kiso-Fukushima Stn (5 min from Iwaya Inn) straight to tonight's inn
@@ -394,7 +394,7 @@ const TRAIL = Object.fromEntries(Object.entries(TRAIL_ENC).map(([k, segs]) => [k
 const TOUR = [
   {day:"d2", a:[35.36,137.20], b:P.ena, label:"🚃 from Nagoya", stub:true},
   {day:"d4B", a:P.nagiso, b:P.kisoF, via:[P.nojiri], label:"🚃 JR train to Kiso-Fukushima, ~50 min"},
-  {day:"d4A", a:P.nojiri, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~40 min"},
+  {day:"d4A", a:P.nojiri, b:P.kisoF, label:"🚃 JR train to Kiso-Fukushima, ~38 min"},
   {day:"d4B", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
   {day:"d4A", a:P.kisoF, b:P.iwaya, label:"🚶 5 min to Iwaya Inn", short:true},
   {day:"d5", a:P.iwaya, b:P.karasawa, dyn:0},
@@ -452,7 +452,7 @@ function journeyOf(d){   // the planned tour transport, timed: morning transfer 
     const z = segs.at(-1); segs.push({t0:z.t1, t1:1e9, grp:"pm", kind:"wait", done:true, a:z.b, b:z.b, label:`at ${z.to}`, to:z.to}); };
   const toIwaya = {a:P.kisoF, b:P.iwaya, ride:5, walk:true, what:"walking to Iwaya Inn", to:"Iwaya Inn"};
   if (d === DAYS.d4B) chain([{a:P.nagiso, b:P.kisoF, via:[P.nojiri], from:"Nagiso Stn", deps:DEP.nagisoTrain, ride:50, mode:"train", what:"train", to:"Kiso-Fukushima"}, toIwaya]);
-  if (d === DAYS.d4A) chain([{a:P.nojiri, b:P.kisoF, from:"Nojiri Stn", deps:DEP.nojiriTrain, ride:40, mode:"train", what:"train", to:"Kiso-Fukushima", est:true}, toIwaya]);
+  if (d === DAYS.d4A) chain([{a:P.nojiri, b:P.kisoF, from:"Nojiri Stn", deps:DEP.nojiriTrain, ride:38, mode:"train", what:"train", to:"Kiso-Fukushima", est:true}, toIwaya]);
   if (d === DAYS.d6) chain([{a:P.narai, b:P.shiojiri, from:"Narai Stn", deps:DEP.naraiTrain, ride:25, mode:"train", what:"train", to:"Shiojiri", est:true},
                             {a:P.shiojiri, b:P.nagano, from:"Shiojiri", wait:15, ride:50, mode:"train", what:"Shinano express", to:"Nagano", est:true},
                             {a:P.nagano, b:P.karuizawaStn, from:"Nagano", wait:10, ride:30, mode:"shinkansen", what:"shinkansen", to:"Karuizawa", est:true},
