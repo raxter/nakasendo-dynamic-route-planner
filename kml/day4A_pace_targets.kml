@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document>
-<name>Day 4 Course A · pace targets (Mon 16 Nov)</name>
-<description>Times from Walk Japan's Course A schedule; ≈ markers are interpolated. Places © OpenStreetMap contributors (ODbL).</description>
+<name>Day 4A · 20 min/km · leave 7:45</name>
+<description>Times at 20 min/km + 15 min per 100 m climbed, on Walk Japan's Course A track (19.6 km, ≈570 m of climbing), with stops at Tsumago, Nagiso and lunch. Places © OpenStreetMap contributors (ODbL); heights GSI.</description>
 <Style id="go"><IconStyle><color>ff3d8b2e</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
 <Style id="town"><IconStyle><color>ff1f6fd6</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
 <Style id="exit"><IconStyle><color>ff12a7f5</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
@@ -9,40 +9,60 @@
 <Style id="pt"><IconStyle><color>ff8a6a5a</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
 <Style id="lunch"><IconStyle><color>ff7a2ae0</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
 <Style id="pass"><IconStyle><color>ff2a2ad6</color><scale>1.1</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
-<Style id="pace"><IconStyle><color>ff3d8b2e</color><scale>0.8</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
-<Placemark><name>8:30 Leave Maruya Inn</name><description>Breakfast 7:30. Day 4 Course A: O-tsumago → Nagiso → Yogawa-michi → Nenoue Pass → Nojiri.
+<Style id="pace"><IconStyle><color>ff3d8b2e</color><scale>0.7</scale><Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>
+<Placemark><name>leave 7:45 Maruya Inn</name><description>Day 4 Course A: O-tsumago → Nagiso → Yogawa-michi → Nenoue Pass → Nojiri. Walk Japan's breakfast is 7:30: ask for it earlier.
 
-km 0.0 of 19.6 on Walk Japan's route map.</description><styleUrl>#go</styleUrl><Point><coordinates>137.593000,35.564700,0</coordinates></Point></Placemark>
-<Placemark><name>9:00–9:45 Tsumago post town</name><description>Waki-honjin museum opens 9:00 (¥800; closed 2nd/4th Thursday). Guide: no more than an hour here. Leave by 9:45.
+km 0.0 of 19.6 · 493 m.
+Walk Japan's schedule here: leave 8:30.</description><styleUrl>#go</styleUrl><Point><coordinates>137.593000,35.564700,0</coordinates></Point></Placemark>
+<Placemark><name>8:05 · km 1</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 8:05. Height 433 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.595177,35.572083,0</coordinates></Point></Placemark>
+<Placemark><name>8:23–8:38 Tsumago</name><description>You saw Tsumago on Day 3, so a short stop. (Waki-honjin opens 9:00, ¥800.)
 
-km 1.9 of 19.6 on Walk Japan's route map.</description><styleUrl>#town</styleUrl><Point><coordinates>137.595000,35.579000,0</coordinates></Point></Placemark>
-<Placemark><name>10:45–11:00 Nagiso Stn · buy picnic lunch</name><description>LAST EXIT: trains from here (Course B ends here). Buy the picnic lunch nearby. Leave 11:30–11:45.
+km 1.9 of 19.6 · 429 m.
+Walk Japan's schedule here: 9:00–9:45.</description><styleUrl>#town</styleUrl><Point><coordinates>137.595000,35.579000,0</coordinates></Point></Placemark>
+<Placemark><name>8:41 · km 2</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 8:41. Height 432 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.596250,35.579844,0</coordinates></Point></Placemark>
+<Placemark><name>9:06 · km 3</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 9:06. Height 452 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.599877,35.586565,0</coordinates></Point></Placemark>
+<Placemark><name>9:28 · km 4</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 9:28. Height 442 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.602704,35.592356,0</coordinates></Point></Placemark>
+<Placemark><name>9:50 · km 5</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 9:50. Height 408 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.608209,35.598165,0</coordinates></Point></Placemark>
+<Placemark><name>9:52–10:22 Nagiso Stn · buy picnic lunch</name><description>LAST EXIT: trains from here (Course B ends here). Behind time? Take Course B. Buy the picnic lunch nearby.
 
-km 5.1 of 19.6 on Walk Japan's route map.</description><styleUrl>#exit</styleUrl><Point><coordinates>137.608400,35.598800,0</coordinates></Point></Placemark>
-<Placemark><name>Optional · Momosuke Bridge</name><description>Wooden suspension bridge (1922) over the Kiso river, a short detour from Nagiso.
+km 5.1 of 19.6 · 409 m.
+Walk Japan's schedule here: 10:45–11:45.</description><styleUrl>#exit</styleUrl><Point><coordinates>137.608400,35.598800,0</coordinates></Point></Placemark>
+<Placemark><name>10:28 Momosuke Bridge (optional)</name><description>Wooden suspension bridge (1922), a short detour, inside the Nagiso stop time.
 
-km 5.4 of 19.6 on Walk Japan's route map.</description><styleUrl>#opt</styleUrl><Point><coordinates>137.606950,35.600880,0</coordinates></Point></Placemark>
-<Placemark><name>12:15–12:30 Midono-juku → start Yogawa-michi climb</name><description>After Midono post town (三留野宿), climb the Yogawa-michi (与川道). From here there's no transport until Nojiri. Running late here? Think about Course B (train from Nagiso).
+km 5.4 of 19.6 · 402 m.
+Walk Japan's schedule here: optional.</description><styleUrl>#opt</styleUrl><Point><coordinates>137.606950,35.600880,0</coordinates></Point></Placemark>
+<Placemark><name>10:44 · km 6</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 10:44. Height 439 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.611321,35.604913,0</coordinates></Point></Placemark>
+<Placemark><name>10:55 Midono-juku → Yogawa-michi climb</name><description>After Midono post town (三留野宿) the climb up the Yogawa-michi (与川道) starts. No transport until Nojiri.
 
-km 6.5 of 19.6 on Walk Japan's route map.</description><styleUrl>#town</styleUrl><Point><coordinates>137.611560,35.608800,0</coordinates></Point></Placemark>
-<Placemark><name>≈13:34 Shozensawa stream (Yogawa / Midono boundary)</name><description>正善沢. On the way up the Yogawa valley.
+km 6.5 of 19.6 · 446 m.
+Walk Japan's schedule here: 12:15–12:30.</description><styleUrl>#town</styleUrl><Point><coordinates>137.611560,35.608800,0</coordinates></Point></Placemark>
+<Placemark><name>11:11 · km 7</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 11:11. Height 489 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.614901,35.610666,0</coordinates></Point></Placemark>
+<Placemark><name>11:42 · km 8</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 11:42. Height 559 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.621799,35.616442,0</coordinates></Point></Placemark>
+<Placemark><name>12:07 · km 9</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 12:07. Height 582 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.629753,35.619751,0</coordinates></Point></Placemark>
+<Placemark><name>12:21 Shozensawa stream</name><description>正善沢, the Yogawa / Midono boundary.
 
-km 9.6 of 19.6 on Walk Japan's route map.</description><styleUrl>#pt</styleUrl><Point><coordinates>137.634550,35.621800,0</coordinates></Point></Placemark>
-<Placemark><name>14:00–14:30 Picnic lunch ≈ Yogawa village headman's house</name><description>Guide: picnic lunch spot with a covered shelter at 14:00–14:30; this is the likely spot (与川村庄屋屋敷), not named in the guide. Leave 14:30–15:00.
+km 9.6 of 19.6 · 596 m.
+Walk Japan's schedule here: —.</description><styleUrl>#pt</styleUrl><Point><coordinates>137.634550,35.621800,0</coordinates></Point></Placemark>
+<Placemark><name>12:33 · km 10</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 12:33. Height 618 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.635952,35.623459,0</coordinates></Point></Placemark>
+<Placemark><name>12:55 · km 11</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 12:55. Height 576 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.640965,35.629531,0</coordinates></Point></Placemark>
+<Placemark><name>13:07–13:37 Picnic lunch · Yogawa headman's house</name><description>与川村庄屋屋敷: the likely 'picnic spot with a covered shelter' (not named in the guide).
 
-km 11.4 of 19.6 on Walk Japan's route map.</description><styleUrl>#lunch</styleUrl><Point><coordinates>137.641660,35.632060,0</coordinates></Point></Placemark>
-<Placemark><name>15:45–16:00 Nenoue Pass (top)</name><description>根の上峠, the high point (~840 m). Sunset 16:40, dark ≈17:08: don't linger.
+km 11.4 of 19.6 · 621 m.
+Walk Japan's schedule here: 14:00–15:00.</description><styleUrl>#lunch</styleUrl><Point><coordinates>137.641660,35.632060,0</coordinates></Point></Placemark>
+<Placemark><name>13:52 · km 12</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 13:52. Height 608 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.645827,35.633378,0</coordinates></Point></Placemark>
+<Placemark><name>14:19 · km 13</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 14:19. Height 657 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.651926,35.638482,0</coordinates></Point></Placemark>
+<Placemark><name>14:46 · km 14</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 14:46. Height 704 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.655997,35.645151,0</coordinates></Point></Placemark>
+<Placemark><name>15:12 · km 15</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 15:12. Height 742 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.657340,35.648971,0</coordinates></Point></Placemark>
+<Placemark><name>15:38 Nenoue Pass (top, 840 m)</name><description>根の上峠, the high point. Sunset 16:40, dark ≈17:08.
 
-km 15.6 of 19.6 on Walk Japan's route map.</description><styleUrl>#pass</styleUrl><Point><coordinates>137.655110,35.653180,0</coordinates></Point></Placemark>
-<Placemark><name>17:00 Nojiri Stn · train 17:26 (or 14:52)</name><description>Donguri Café if you arrive before 16:45. Train 17:26 Nojiri → Kiso-Fukushima (38 min, ¥420), arrive 18:04; the earlier 14:52 if exceptionally fast. Then taxi (~¥900, 3–5 min) or walk ~1 km to Iwaya Inn. Dinner 19:00.
+km 15.6 of 19.6 · 839 m.
+Walk Japan's schedule here: 15:45–16:00.</description><styleUrl>#pass</styleUrl><Point><coordinates>137.655110,35.653180,0</coordinates></Point></Placemark>
+<Placemark><name>15:46 · km 16</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 15:46. Height 817 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.653470,35.654656,0</coordinates></Point></Placemark>
+<Placemark><name>16:06 · km 17</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 16:06. Height 754 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.647736,35.658507,0</coordinates></Point></Placemark>
+<Placemark><name>16:26 · km 18</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 16:26. Height 665 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.641202,35.663768,0</coordinates></Point></Placemark>
+<Placemark><name>16:46 · km 19</name><description>At 20 min/km + 15 min per 100 m climbed, leaving 7:45: be here by 16:46. Height 547 m.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.637484,35.670087,0</coordinates></Point></Placemark>
+<Placemark><name>16:57 Nojiri Stn</name><description>Train 17:26 Nojiri → Kiso-Fukushima (38 min, ¥420; earlier one 14:52), arrive 18:04, then taxi (~¥900) or walk ~1 km to Iwaya Inn. Donguri Café if you're here before 16:45.
 
-km 19.6 of 19.6 on Walk Japan's route map.</description><styleUrl>#exit</styleUrl><Point><coordinates>137.636510,35.673170,0</coordinates></Point></Placemark>
-<Placemark><name>≈12:57 pace check · km 8</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 12:57.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.621799,35.616442,0</coordinates></Point></Placemark>
-<Placemark><name>≈13:20 pace check · km 9</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 13:20.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.629753,35.619751,0</coordinates></Point></Placemark>
-<Placemark><name>≈13:55 pace check · km 10.5</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 13:55.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.639097,35.626287,0</coordinates></Point></Placemark>
-<Placemark><name>≈15:03 pace check · km 12.5</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 15:03.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.648704,35.636233,0</coordinates></Point></Placemark>
-<Placemark><name>≈15:19 pace check · km 13.5</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 15:19.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.654774,35.641337,0</coordinates></Point></Placemark>
-<Placemark><name>≈15:34 pace check · km 14.5</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 15:34.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.660382,35.646561,0</coordinates></Point></Placemark>
-<Placemark><name>≈16:07 pace check · km 16.5</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 16:07.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.651301,35.656824,0</coordinates></Point></Placemark>
-<Placemark><name>≈16:33 pace check · km 18</name><description>Interpolated from the Walk Japan schedule: to stay on it, be here around 16:33.</description><styleUrl>#pace</styleUrl><Point><coordinates>137.641202,35.663768,0</coordinates></Point></Placemark>
+km 19.6 of 19.6 · 521 m.
+Walk Japan's schedule here: 17:00 · train 17:26.</description><styleUrl>#exit</styleUrl><Point><coordinates>137.636510,35.673170,0</coordinates></Point></Placemark>
 </Document></kml>
