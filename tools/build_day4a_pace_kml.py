@@ -109,16 +109,25 @@ for k in range(1, int(TOTAL) + 1):
     EVENTS.append((k, f"{fm(arrive(k))} · km {k}{decide(k, True)}", at(k), f"Planned: {fm(arrive(k))} (at {A.pace:g} min/km + {A.climb:g} min per 100 m climbed, leaving {A.leave}). Height {round(look(H, k))} m.\n\n{decide(k, False)}", "pace"))
 EVENTS.sort(key=lambda e: e[0])
 
-STY = {"go": "ff3d8b2e", "town": "ff1f6fd6", "exit": "ff12a7f5", "opt": "ffb0b0b0", "pt": "ff8a6a5a", "lunch": "ff7a2ae0", "pass": "ff2a2ad6", "pace": "ff3d8b2e"}
-def style(k, col):
-    return (f'<Style id="{k}"><IconStyle><color>{col}</color><scale>{0.7 if k == "pace" else 1.1}</scale>'
-            f'<Icon><href>https://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href></Icon></IconStyle><LabelStyle><scale>0.9</scale></LabelStyle></Style>')
+# Two colours, written the way Google My Maps exports its own pins (icon-1899-RRGGBB + StyleMap), so they survive an import:
+# waypoints orange, km pace checks yellow (Walk Japan's map already uses blue for the Day 3/4 line, red/green for start/end).
+# Each marker also carries a "Type" column, for My Maps' "Style by data column" if the colours don't come through.
+COL = {"Waypoint": "E65100", "Pace check": "FFD600"}
+TYPE = lambda sty: "Pace check" if sty == "pace" else "Waypoint"
+def style(rgb):
+    abgr = "ff" + rgb[4:6] + rgb[2:4] + rgb[0:2]; sid = f"icon-1899-{rgb}"
+    one = lambda kind, lab: (f'<Style id="{sid}-{kind}"><IconStyle><color>{abgr}</color><scale>1</scale>'
+                             f'<Icon><href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href></Icon>'
+                             f'<hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/></IconStyle><LabelStyle><scale>{lab}</scale></LabelStyle></Style>')
+    return (one("normal", 0) + one("highlight", 1) +
+            f'<StyleMap id="{sid}"><Pair><key>normal</key><styleUrl>#{sid}-normal</styleUrl></Pair><Pair><key>highlight</key><styleUrl>#{sid}-highlight</styleUrl></Pair></StyleMap>')
 kml = ['<?xml version="1.0" encoding="UTF-8"?>', '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>',
        f'<name>Day 4A · {A.pace:g} min/km · leave {A.leave}</name>',
        f'<description>Times at {A.pace:g} min/km + {A.climb:g} min per 100 m climbed, on Walk Japan\'s Course A track ({TOTAL:.1f} km, ≈{UP[-1]:.0f} m of climbing), with stops at Tsumago, Nagiso and lunch. Places © OpenStreetMap contributors (ODbL); heights GSI.</description>',
-       *[style(k, c) for k, c in STY.items()]]
+       *[style(c) for c in COL.values()]]
 for km, name, ll, desc, sty in EVENTS:
-    kml.append(f'<Placemark><name>{escape(name)}</name><description>{escape(desc)}</description><styleUrl>#{sty}</styleUrl>'
+    kml.append(f'<Placemark><name>{escape(name)}</name><description>{escape(desc)}</description><styleUrl>#icon-1899-{COL[TYPE(sty)]}</styleUrl>'
+               f'<ExtendedData><Data name="Type"><value>{TYPE(sty)}</value></Data></ExtendedData>'
                f'<Point><coordinates>{ll[1]:.6f},{ll[0]:.6f},0</coordinates></Point></Placemark>')
 kml.append('</Document></kml>')
 (ROOT / "kml/day4A_pace_targets.kml").write_text("\n".join(kml), encoding="utf-8")
