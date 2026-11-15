@@ -58,8 +58,8 @@ def at(km):
 KS = [i / 10 for i in range(int(TOTAL * 10) + 1)] + [TOTAL]
 H = [be.height(*at(k)) for k in KS]
 SM = [sum(H[max(0, i - 2):i + 3]) / len(H[max(0, i - 2):i + 3]) for i in range(len(H))]
-UP = [0.0]
-for i in range(1, len(SM)): UP.append(UP[-1] + max(0, SM[i] - SM[i - 1]))
+UP, DN = [0.0], [0.0]
+for i in range(1, len(SM)): UP.append(UP[-1] + max(0, SM[i] - SM[i - 1])); DN.append(DN[-1] + max(0, SM[i - 1] - SM[i]))
 def look(arr, km):
     for i in range(1, len(KS)):
         if km <= KS[i]: f = (km - KS[i - 1]) / ((KS[i] - KS[i - 1]) or 1); return arr[i - 1] + f * (arr[i] - arr[i - 1])
@@ -81,13 +81,32 @@ WAY = [(n, ll, stop, wj, note, sty, 0.0 if i == 0 else TOTAL if i == len(WAY) - 
 def arrive(km):   # clock time you get to km (before any stop there)
     t = hm(A.leave) + km * A.pace + look(UP, km) * A.climb / 100
     return t + sum(w[2] for w in WAY if w[6] < km - 1e-6)
+# Decision deadlines for the last train that gets you to Kiso-Fukushima before 19:00: it's the same train from either end,
+# 17:16 from Nagiso = 17:26 from Nojiri (arrive 18:04). "Go by": the latest time to be here and still reach Nojiri by 17:20
+# (with the stops still to come: Tsumago, Nagiso, lunch). "Back by": the latest time to be here and still walk back
+# to Nagiso by 17:10 (today's downhills count as climbs on the way back; snack, don't stop for lunch).
+NAG_KM = next(w[6] for w in WAY if w[0].startswith("Nagiso")); LUNCH_KM = next(w[6] for w in WAY if w[0].startswith("Picnic"))
+rise = lambda arr, a, b: look(arr, b) - look(arr, a)
+go_by = lambda x: hm("17:20") - ((TOTAL - x) * A.pace + rise(UP, x, TOTAL) * A.climb / 100
+                                 + sum(w[2] for w in WAY if w[6] >= x - 1e-6))   # the stops still to come (one you're at, too)
+back_mins = lambda x: (x - NAG_KM) * A.pace + rise(DN, NAG_KM, x) * A.climb / 100
+back_by = lambda x: hm("17:10") - back_mins(x)
+TURN_KM = next(k / 100 for k in range(int(NAG_KM * 100), int(TOTAL * 100)) if back_by(k / 100) <= go_by(k / 100))   # past here, carrying on is quicker
+def decide(x, short):
+    if x < NAG_KM - 1e-6: return (f" · go by {fm(go_by(x))}" if short else
+        f"Go by {fm(go_by(x))}: be here by then to do Course A and catch the 17:26 at Nojiri (else Course B: train from Nagiso).")
+    if x <= TURN_KM: return (f" · go by {fm(go_by(x))} · back by {fm(back_by(x))}" if short else
+        f"Go by {fm(go_by(x))}: here by then → carry on to Nojiri for the 17:26.\nBack by {fm(back_by(x))}: here by then → you can still walk back to Nagiso for the 17:16 (same train, Kiso-Fukushima 18:04; snack, don't stop for lunch).\nLater than both → next trains reach Kiso-Fukushima ≈19:05: phone Iwaya Inn about dinner.")
+    return (f" · go by {fm(go_by(x))} · no turning back" if short else
+        f"Go by {fm(go_by(x))}: here by then → Nojiri for the 17:26. Past km {TURN_KM:.1f} carrying on is always quicker than turning back. Later → next train ≈18:29 (≈19:05 at Kiso-Fukushima): phone Iwaya Inn.")
 EVENTS = []
 for n, ll, stop, wj, note, sty, km in WAY:
     a = arrive(km); when = f"{fm(a)}–{fm(a + stop)}" if stop else fm(a)
     if km == 0: when = f"leave {fm(a)}"
-    EVENTS.append((km, f"{when} {n}", ll, f"{note}\n\nkm {km:.1f} of {TOTAL:.1f} · {round(look(H, km))} m.\nWalk Japan's schedule here: {wj or '—'}.", sty))
+    dec = "" if km >= TOTAL - 1e-6 else "\n\n" + decide(km, False)
+    EVENTS.append((km, f"{when} {n}", ll, f"{note}{dec}\n\nkm {km:.1f} of {TOTAL:.1f} · {round(look(H, km))} m.\nWalk Japan's schedule here: {wj or '—'}.", sty))
 for k in range(1, int(TOTAL) + 1):
-    EVENTS.append((k, f"{fm(arrive(k))} · km {k}", at(k), f"At {A.pace:g} min/km + {A.climb:g} min per 100 m climbed, leaving {A.leave}: be here by {fm(arrive(k))}. Height {round(look(H, k))} m.", "pace"))
+    EVENTS.append((k, f"{fm(arrive(k))} · km {k}{decide(k, True)}", at(k), f"Planned: {fm(arrive(k))} (at {A.pace:g} min/km + {A.climb:g} min per 100 m climbed, leaving {A.leave}). Height {round(look(H, k))} m.\n\n{decide(k, False)}", "pace"))
 EVENTS.sort(key=lambda e: e[0])
 
 STY = {"go": "ff3d8b2e", "town": "ff1f6fd6", "exit": "ff12a7f5", "opt": "ffb0b0b0", "pt": "ff8a6a5a", "lunch": "ff7a2ae0", "pass": "ff2a2ad6", "pace": "ff3d8b2e"}
@@ -105,4 +124,4 @@ kml.append('</Document></kml>')
 (ROOT / "kml/day4A_pace_targets.kml").write_text("\n".join(kml), encoding="utf-8")
 print(f"{TOTAL:.2f} km, climb ≈{UP[-1]:.0f} m, walking {TOTAL * A.pace + UP[-1] * A.climb / 100:.0f} min + stops {sum(w[2] for w in WAY)} min")
 for km, name, *_ in EVENTS: print(f"  km {km:5.2f}  {name}")
-print("wrote kml/day4A_pace_targets.kml")
+print(f"turn point km {TURN_KM:.2f}"); print("wrote kml/day4A_pace_targets.kml")
