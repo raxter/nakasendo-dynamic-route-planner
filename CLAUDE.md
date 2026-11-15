@@ -34,7 +34,7 @@ You are picking up a project built in an earlier Claude session. This file is th
 | `docs/*.pdf` | Printable trail and duck-out guides: one in English, one with English and Japanese side by side. They're static and were made in the earlier session; the generator isn't included. |
 | `data/trail_data.json` | Per-day stops, ETAs at 30 min/km, zones and journeys, exported from the planner for the PDFs. |
 | `kml/*.kml` + `tools/build_kml.py` | Google My Maps imports for inns and sub-stops. **These use the old pace assumptions.** |
-| `kml/day4A_pace_targets.kml` + `tools/build_day4a_pace_kml.py` | Day 4 Course A pacing markers for Google My Maps (owner's request, 15 Nov 2026): Walk Japan's Course A schedule times at OSM-placed checkpoints, plus ≈ interpolated pace checks along the planner's 4A path. Served at `/kml/day4A_pace_targets.kml`. |
+| `kml/day4A_pace_targets.kml` + `tools/build_day4a_pace_kml.py` | Day 4 Course A pacing markers for Google My Maps (owner's request, 15 Nov 2026): Walk Japan's Course A schedule times at OSM-placed checkpoints, plus ≈ interpolated pace checks along **Walk Japan's own track** (their official route map from the Route Booklet QR code, the owner's My Maps copy `mid=12UGlGkwcBPp5QVDwn7sAF99ue5Y_klg`, saved git-ignored at `.cache/walkjapan_mymap.kml`; see the script). Markers only, so Walk Japan's track isn't republished. Served at `/kml/day4A_pace_targets.kml`. |
 | `.nojekyll` | Stops GitHub Pages from running Jekyll. |
 
 ## 3. First job: host it on GitHub Pages
